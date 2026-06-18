@@ -1,40 +1,44 @@
 name: Update Lightning Lane Data
 
 on:
-schedule:
-- cron: ‘*/5 * * * *’
-workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
 
 permissions:
-contents: write
+  contents: write
 
 jobs:
-update:
-runs-on: ubuntu-latest
+  update:
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout Repo
-    uses: actions/checkout@v4
-  - name: Setup Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.11'
-  - name: Install Dependencies
-    run: |
-      pip install requests
-  - name: Run Updater
-    env:
-      PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
-      PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
-    run: |
-      python scripts/update.py
-  - name: Commit Updated Data
-    run: |
-      git config user.name github-actions
-      git config user.email github-actions@github.com
-      git add data.json state.json
-      git diff --staged --quiet || \
-      git commit -m "Update Lightning Lane data"
-  - name: Push Changes
-    run: |
-      git push
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests
+
+      - name: Run Updater
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+        run: |
+          python scripts/update.py
+
+      - name: Commit Updated Data
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add data.json state.json
+          git diff --staged --quiet || git commit -m "Update Lightning Lane data"
+
+      - name: Push Changes
+        run: |
+          git push
