@@ -5,23 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Disney Lightning Lane Watch</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #07111f; color: #eef5ff; }
-    header { padding: 22px 18px; background: linear-gradient(135deg, #123e8a, #07111f); }
-    h1 { margin: 0 0 6px; font-size: 26px; }
-    .meta { opacity: .85; font-size: 14px; }
-    main { padding: 18px; max-width: 1100px; margin: auto; }
-    .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .card { background: #101d31; border: 1px solid #263956; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
-    .date { font-weight: 700; font-size: 18px; margin-bottom: 10px; }
-    .park { color: #9fc1ff; font-weight: 650; margin: 14px 0 6px; }
-    .ride { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid #22324b; }
-    .ride:first-of-type { border-top: 0; }
-    .name { line-height: 1.25; }
-    .price { text-align: right; white-space: nowrap; }
-    .available { color: #7dffb2; font-weight: 700; }
-    .unavailable { color: #ff8d8d; font-weight: 700; }
-    .empty { padding: 20px; background: #101d31; border-radius: 14px; border: 1px solid #263956; }
-    footer { padding: 18px; text-align: center; opacity: .75; font-size: 13px; }
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #071122; color: #f6f8fb; }
+    header { padding: 24px 18px; background: linear-gradient(135deg, #123a7a, #071122); }
+    h1 { margin: 0 0 8px; font-size: 1.7rem; }
+    .meta { color: #c8d4e5; font-size: .95rem; }
+    main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; }
+    .pill { padding: 8px 12px; background: #13233b; border: 1px solid #263a5b; border-radius: 999px; color: #d9e6fb; }
+    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 14px; background: #0d1b31; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid #1f3354; text-align: left; }
+    th { background: #102544; color: #bed3f3; font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+    tr.available td:first-child { border-left: 5px solid #45d483; }
+    tr.unavailable td:first-child { border-left: 5px solid #ef5b5b; }
+    .status { font-weight: 700; }
+    .available .status { color: #45d483; }
+    .unavailable .status { color: #ef8b8b; }
+    .error { margin-top: 16px; padding: 12px; background: #3a1420; border: 1px solid #723047; border-radius: 12px; }
+    @media (max-width: 720px) {
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tr { margin-bottom: 12px; border: 1px solid #1f3354; border-radius: 14px; overflow: hidden; }
+      td { border-bottom: 0; padding: 8px 12px; }
+      td::before { content: attr(data-label); display: block; color: #9eb5d5; font-size: .75rem; text-transform: uppercase; }
+    }
   </style>
 </head>
 <body>
@@ -29,50 +36,57 @@
     <h1>Disney Lightning Lane Watch</h1>
     <div class="meta" id="meta">Loading…</div>
   </header>
-  <main id="app"></main>
-  <footer>Updates from GitHub Actions + ThemeParks.wiki schedule API.</footer>
+  <main>
+    <div class="toolbar" id="summary"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Park</th>
+          <th>Ride</th>
+          <th>Price</th>
+          <th>Available</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="errors"></div>
+  </main>
+  <script>
+    async function loadData() {
+      const response = await fetch('data.json?cache=' + Date.now());
+      const data = await response.json();
+      const items = data.items || [];
+      document.getElementById('meta').textContent = `Trip: ${data.trip_start || '?'} to ${data.trip_end || '?'} · Updated: ${data.updated_at || 'never'}`;
 
-<script>
-async function load() {
-  const res = await fetch('data.json?cacheBust=' + Date.now());
-  const data = await res.json();
-  const meta = document.getElementById('meta');
-  const updated = data.updated_at ? new Date(data.updated_at).toLocaleString() : 'not updated yet';
-  meta.textContent = `Trip: ${data.trip_start} to ${data.trip_end} • Last updated: ${updated}`;
+      const available = items.filter(x => x.available).length;
+      document.getElementById('summary').innerHTML = `
+        <span class="pill">${items.length} watched records</span>
+        <span class="pill">${available} available</span>
+        <span class="pill">${items.length - available} unavailable</span>
+      `;
 
-  const app = document.getElementById('app');
-  if (!data.items || data.items.length === 0) {
-    app.innerHTML = '<div class="empty">No data yet. Run the GitHub Action once, then refresh this page.</div>';
-    return;
-  }
+      document.getElementById('rows').innerHTML = items.map(item => `
+        <tr class="${item.available ? 'available' : 'unavailable'}">
+          <td data-label="Date">${item.date}</td>
+          <td data-label="Park">${item.park}</td>
+          <td data-label="Ride">${item.ride}</td>
+          <td data-label="Price">${item.price_formatted || '—'}</td>
+          <td data-label="Available" class="status">${item.available ? 'YES' : 'NO'}</td>
+        </tr>
+      `).join('');
 
-  const byDate = {};
-  for (const item of data.items) {
-    byDate[item.date] ??= {};
-    byDate[item.date][item.park] ??= [];
-    byDate[item.date][item.park].push(item);
-  }
+      const errors = data.errors || [];
+      document.getElementById('errors').innerHTML = errors.length
+        ? `<div class="error"><strong>Errors:</strong><pre>${JSON.stringify(errors, null, 2)}</pre></div>`
+        : '';
+    }
 
-  app.innerHTML = '<div class="grid">' + Object.entries(byDate).map(([date, parks]) => `
-    <section class="card">
-      <div class="date">${date}</div>
-      ${Object.entries(parks).map(([park, rides]) => `
-        <div class="park">${park}</div>
-        ${rides.map(r => `
-          <div class="ride">
-            <div class="name">${r.ride}</div>
-            <div class="price">
-              <div>${r.price_formatted || 'N/A'}</div>
-              <div class="${r.available ? 'available' : 'unavailable'}">${r.available ? 'Available' : 'Unavailable'}</div>
-            </div>
-          </div>
-        `).join('')}
-      `).join('')}
-    </section>
-  `).join('') + '</div>';
-}
-load();
-setInterval(load, 5 * 60 * 1000);
-</script>
+    loadData().catch(err => {
+      document.getElementById('meta').textContent = 'Could not load data.json';
+      document.getElementById('errors').innerHTML = `<div class="error">${err}</div>`;
+    });
+    setInterval(loadData, 5 * 60 * 1000);
+  </script>
 </body>
 </html>
