@@ -2,6 +2,7 @@
   "trip_start": "2026-06-18",
   "trip_end": "2026-06-22",
   "parks": [
+    
     {
       "name": "Magic Kingdom",
       "id": "75ea578a-adc8-4116-a54d-dccb60765ef9"
