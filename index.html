@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Disney Lightning Lane Watch</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #07111f; color: #eef5ff; }
+    header { padding: 22px 18px; background: linear-gradient(135deg, #123e8a, #07111f); }
+    h1 { margin: 0 0 6px; font-size: 26px; }
+    .meta { opacity: .85; font-size: 14px; }
+    main { padding: 18px; max-width: 1100px; margin: auto; }
+    .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card { background: #101d31; border: 1px solid #263956; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+    .date { font-weight: 700; font-size: 18px; margin-bottom: 10px; }
+    .park { color: #9fc1ff; font-weight: 650; margin: 14px 0 6px; }
+    .ride { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid #22324b; }
+    .ride:first-of-type { border-top: 0; }
+    .name { line-height: 1.25; }
+    .price { text-align: right; white-space: nowrap; }
+    .available { color: #7dffb2; font-weight: 700; }
+    .unavailable { color: #ff8d8d; font-weight: 700; }
+    .empty { padding: 20px; background: #101d31; border-radius: 14px; border: 1px solid #263956; }
+    footer { padding: 18px; text-align: center; opacity: .75; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Disney Lightning Lane Watch</h1>
+    <div class="meta" id="meta">Loading…</div>
+  </header>
+  <main id="app"></main>
+  <footer>Updates from GitHub Actions + ThemeParks.wiki schedule API.</footer>
+
+<script>
+async function load() {
+  const res = await fetch('data.json?cacheBust=' + Date.now());
+  const data = await res.json();
+  const meta = document.getElementById('meta');
+  const updated = data.updated_at ? new Date(data.updated_at).toLocaleString() : 'not updated yet';
+  meta.textContent = `Trip: ${data.trip_start} to ${data.trip_end} • Last updated: ${updated}`;
+
+  const app = document.getElementById('app');
+  if (!data.items || data.items.length === 0) {
+    app.innerHTML = '<div class="empty">No data yet. Run the GitHub Action once, then refresh this page.</div>';
+    return;
+  }
+
+  const byDate = {};
+  for (const item of data.items) {
+    byDate[item.date] ??= {};
+    byDate[item.date][item.park] ??= [];
+    byDate[item.date][item.park].push(item);
+  }
+
+  app.innerHTML = '<div class="grid">' + Object.entries(byDate).map(([date, parks]) => `
+    <section class="card">
+      <div class="date">${date}</div>
+      ${Object.entries(parks).map(([park, rides]) => `
+        <div class="park">${park}</div>
+        ${rides.map(r => `
+          <div class="ride">
+            <div class="name">${r.ride}</div>
+            <div class="price">
+              <div>${r.price_formatted || 'N/A'}</div>
+              <div class="${r.available ? 'available' : 'unavailable'}">${r.available ? 'Available' : 'Unavailable'}</div>
+            </div>
+          </div>
+        `).join('')}
+      `).join('')}
+    </section>
+  `).join('') + '</div>';
+}
+load();
+setInterval(load, 5 * 60 * 1000);
+</script>
+</body>
+</html>
