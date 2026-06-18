@@ -41,4 +41,5 @@ jobs:
 
       - name: Push Changes
         run: |
+          git pull --rebase
           git push
