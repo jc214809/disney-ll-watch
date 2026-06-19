@@ -277,7 +277,10 @@ async function loadData() {
 
         const grouped = {};
 
+        const today = new Date().toISOString().slice(0, 10);
+
         data.items.forEach(item => {
+            if (item.date < today) return;
             if (!grouped[item.date]) {
                 grouped[item.date] = {};
             }
