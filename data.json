@@ -50,7 +50,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
     },
     {
-      "available": true,
+      "available": false,
       "currency": "USD",
       "date": "2026-06-18",
       "name": "Lightning Lane for TRON Lightcycle / Run",
@@ -62,7 +62,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
     },
     {
-      "available": true,
+      "available": false,
       "currency": "USD",
       "date": "2026-06-19",
       "name": "Lightning Lane for Avatar Flight of Passage",
@@ -230,7 +230,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
     },
     {
-      "available": true,
+      "available": false,
       "currency": "USD",
       "date": "2026-06-21",
       "name": "Lightning Lane for TRON Lightcycle / Run",
@@ -300,9 +300,69 @@
       "purchase_id": "lightninglane_411504498",
       "ride": "TRON Lightcycle / Run",
       "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
+    },
+    {
+      "available": true,
+      "currency": "USD",
+      "date": "2026-06-23",
+      "name": "Lightning Lane for Avatar Flight of Passage",
+      "park": "Animal Kingdom",
+      "price_amount": 1500,
+      "price_formatted": "$15.00",
+      "purchase_id": "lightninglane_18665186",
+      "ride": "Avatar Flight of Passage",
+      "source_url": "https://api.themeparks.wiki/v1/entity/1c84a229-8862-4648-9c71-378ddd2c7693/schedule/2026/06"
+    },
+    {
+      "available": true,
+      "currency": "USD",
+      "date": "2026-06-23",
+      "name": "Lightning Lane for Guardians of the Galaxy: Cosmic Rewind",
+      "park": "EPCOT",
+      "price_amount": 1800,
+      "price_formatted": "$18.00",
+      "purchase_id": "lightninglane_411499845",
+      "ride": "Guardians of the Galaxy: Cosmic Rewind",
+      "source_url": "https://api.themeparks.wiki/v1/entity/47f90d2c-e191-4239-a466-5892ef59a88b/schedule/2026/06"
+    },
+    {
+      "available": true,
+      "currency": "USD",
+      "date": "2026-06-23",
+      "name": "Lightning Lane for Star Wars: Rise of the Resistance",
+      "park": "Hollywood Studios",
+      "price_amount": 2200,
+      "price_formatted": "$22.00",
+      "purchase_id": "lightninglane_19263736",
+      "ride": "Star Wars: Rise of the Resistance",
+      "source_url": "https://api.themeparks.wiki/v1/entity/288747d1-8b4f-4a64-867e-ea7c9b27bad8/schedule/2026/06"
+    },
+    {
+      "available": true,
+      "currency": "USD",
+      "date": "2026-06-23",
+      "name": "Lightning Lane for Seven Dwarfs Mine Train",
+      "park": "Magic Kingdom",
+      "price_amount": 1200,
+      "price_formatted": "$12.00",
+      "purchase_id": "lightninglane_16767284",
+      "ride": "Seven Dwarfs Mine Train",
+      "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
+    },
+    {
+      "available": true,
+      "currency": "USD",
+      "date": "2026-06-23",
+      "name": "Lightning Lane for TRON Lightcycle / Run",
+      "park": "Magic Kingdom",
+      "price_amount": 1900,
+      "price_formatted": "$19.00",
+      "purchase_id": "lightninglane_411504498",
+      "ride": "TRON Lightcycle / Run",
+      "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
     }
   ],
-  "trip_end": "2026-06-22",
+  "trip_end": "2026-06-23",
   "trip_start": "2026-06-18",
-  "updated_at": "2026-06-18T23:55:30Z"
+  "updated_at": "2026-06-19T04:53:08Z"
 }
