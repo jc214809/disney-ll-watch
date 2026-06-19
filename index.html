@@ -118,9 +118,12 @@ h1 {
     border-bottom: 1px solid rgba(51, 65, 85, 0.6);
 }
 
-.park-header::before {
-    content: '🏰';
-    font-size: 1rem;
+.park-header img {
+    width: 28px;
+    height: 28px;
+    opacity: 0.85;
+    filter: invert(1);
+    flex-shrink: 0;
 }
 
 table {
@@ -292,21 +295,34 @@ async function loadData() {
             grouped[item.date][item.park].push(item);
         });
 
+        const parkIcons = {
+            'Magic Kingdom': 'icons/magic-kingdom.svg',
+            'EPCOT': 'icons/epcot.svg',
+            'Hollywood Studios': 'icons/hollywood-studios.svg',
+            'Animal Kingdom': 'icons/animal-kingdom.svg',
+        };
+
         let html = '';
 
         Object.keys(grouped)
             .sort()
             .forEach(date => {
 
-                html += `<div class="date-section"><div class="date-header">${date}</div>`;
+                const dateObj = new Date(date + 'T12:00:00');
+                const dateLabel = dateObj.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric' })
+                    + ' - ' + dateObj.toLocaleDateString(undefined, { weekday: 'long' });
+                html += `<div class="date-section"><div class="date-header">${dateLabel}</div>`;
 
                 Object.keys(grouped[date])
                     .sort()
                     .forEach(park => {
 
+                        const iconSrc = parkIcons[park] || '';
+                        const iconHtml = iconSrc ? `<img src="${iconSrc}" alt="">` : '';
+
                         html += `
                             <div class="park-card">
-                                <div class="park-header">${park}</div>
+                                <div class="park-header">${iconHtml}${park}</div>
                                 <table>
                                     <thead>
                                         <tr>

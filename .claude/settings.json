@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs ls -la)"
+      "Bash(xargs ls -la)",
+      "Bash(git -C /Users/joelclark/PycharmProjects/disney-ll-watch pull --rebase)",
+      "Bash(git -C /Users/joelclark/PycharmProjects/disney-ll-watch add index.html .github/workflows/update.yml)",
+      "Bash(git -C /Users/joelclark/PycharmProjects/disney-ll-watch commit -m ' *)",
+      "Bash(git -C /Users/joelclark/PycharmProjects/disney-ll-watch push)",
+      "Bash(git -C /Users/joelclark/PycharmProjects/disney-ll-watch status)",
+      "Bash(git -C /Users/joelclark/PycharmProjects/disney-ll-watch log --oneline -5)",
+      "Bash(git -C /Users/joelclark/PycharmProjects/disney-ll-watch log --oneline origin/main -5)"
     ]
   }
 }
