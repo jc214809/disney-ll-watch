@@ -290,7 +290,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
     },
     {
-      "available": true,
+      "available": false,
       "currency": "USD",
       "date": "2026-06-22",
       "name": "Lightning Lane for TRON Lightcycle / Run",
@@ -364,5 +364,5 @@
   ],
   "trip_end": "2026-06-23",
   "trip_start": "2026-06-18",
-  "updated_at": "2026-06-20T04:00:25Z"
+  "updated_at": "2026-06-20T04:05:16Z"
 }
