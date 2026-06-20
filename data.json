@@ -194,7 +194,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/1c84a229-8862-4648-9c71-378ddd2c7693/schedule/2026/06"
     },
     {
-      "available": true,
+      "available": false,
       "currency": "USD",
       "date": "2026-06-21",
       "name": "Lightning Lane for Guardians of the Galaxy: Cosmic Rewind",
@@ -364,5 +364,5 @@
   ],
   "trip_end": "2026-06-23",
   "trip_start": "2026-06-18",
-  "updated_at": "2026-06-20T00:20:20Z"
+  "updated_at": "2026-06-20T00:25:22Z"
 }
