@@ -28,6 +28,7 @@
     "Star Wars: Rise of the Resistance"
   ],
   "notify_on_available": true,
+  "notify_on_sold_out": true,
   "notify_on_price_drop": false,
   "price_drop_threshold_dollars": 2
 }

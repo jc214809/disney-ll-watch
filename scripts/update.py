@@ -135,6 +135,7 @@ def send_pushover(title, message):
 def build_alerts(config, items, old_state):
     alerts = []
     notify_on_available = config.get("notify_on_available", True)
+    notify_on_sold_out = config.get("notify_on_sold_out", True)
     notify_on_price_drop = config.get("notify_on_price_drop", False)
     drop_threshold = int(round(float(config.get("price_drop_threshold_dollars", 2)) * 100))
 
@@ -148,6 +149,12 @@ def build_alerts(config, items, old_state):
             alerts.append({
                 "title": "Lightning Lane Available",
                 "message": f'{item["ride"]}\n{item["park"]} on {item["date"]}\nPrice: {item.get("price_formatted") or "unknown"}',
+            })
+
+        if notify_on_sold_out and old is not None and old_available is True and now_available is False:
+            alerts.append({
+                "title": "Lightning Lane Sold Out",
+                "message": f'{item["ride"]}\n{item["park"]} on {item["date"]}',
             })
 
         if notify_on_price_drop and old is not None:

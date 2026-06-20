@@ -129,7 +129,12 @@ h1 {
 table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
+
+table th:nth-child(1), table td:nth-child(1) { width: auto; }
+table th:nth-child(2), table td:nth-child(2) { width: 120px; }
+table th:nth-child(3), table td:nth-child(3) { width: 120px; }
 
 th {
     padding: 10px 18px;
