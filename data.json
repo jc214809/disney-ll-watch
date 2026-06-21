@@ -218,7 +218,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/288747d1-8b4f-4a64-867e-ea7c9b27bad8/schedule/2026/06"
     },
     {
-      "available": true,
+      "available": false,
       "currency": "USD",
       "date": "2026-06-21",
       "name": "Lightning Lane for Seven Dwarfs Mine Train",
@@ -364,5 +364,5 @@
   ],
   "trip_end": "2026-06-23",
   "trip_start": "2026-06-18",
-  "updated_at": "2026-06-21T04:00:23Z"
+  "updated_at": "2026-06-21T04:05:17Z"
 }
