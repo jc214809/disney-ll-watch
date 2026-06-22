@@ -242,7 +242,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/75ea578a-adc8-4116-a54d-dccb60765ef9/schedule/2026/06"
     },
     {
-      "available": true,
+      "available": false,
       "currency": "USD",
       "date": "2026-06-22",
       "name": "Lightning Lane for Avatar Flight of Passage",
@@ -266,7 +266,7 @@
       "source_url": "https://api.themeparks.wiki/v1/entity/47f90d2c-e191-4239-a466-5892ef59a88b/schedule/2026/06"
     },
     {
-      "available": false,
+      "available": true,
       "currency": "USD",
       "date": "2026-06-22",
       "name": "Lightning Lane for Star Wars: Rise of the Resistance",
@@ -364,5 +364,5 @@
   ],
   "trip_end": "2026-06-23",
   "trip_start": "2026-06-18",
-  "updated_at": "2026-06-22T16:45:21Z"
+  "updated_at": "2026-06-22T16:50:23Z"
 }
