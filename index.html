@@ -26,10 +26,9 @@ body {
 
 header {
     text-align: center;
-    padding: 48px 20px 32px;
+    padding: 48px 20px 24px;
     background: linear-gradient(180deg, rgba(29,78,216,0.12) 0%, transparent 100%);
     border-bottom: 1px solid rgba(99, 155, 255, 0.1);
-    margin-bottom: 32px;
 }
 
 h1 {
@@ -50,20 +49,60 @@ h1 {
     text-transform: uppercase;
 }
 
+/* Date tab bar */
+#date-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 20px 20px 0;
+    max-width: 900px;
+    margin: 0 auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#date-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.date-tab {
+    flex-shrink: 0;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(51, 65, 85, 0.8);
+    background: rgba(15, 23, 42, 0.6);
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.date-tab:hover {
+    border-color: rgba(99, 155, 255, 0.4);
+    color: #cbd5e1;
+}
+
+.date-tab.active {
+    background: rgba(29, 78, 216, 0.3);
+    border-color: rgba(99, 155, 255, 0.6);
+    color: #93c5fd;
+    box-shadow: 0 0 12px rgba(29, 78, 216, 0.2);
+}
+
 #errors {
     max-width: 900px;
-    margin: 0 auto 20px;
+    margin: 16px auto 0;
     padding: 0 20px;
 }
 
 #content {
     max-width: 900px;
-    margin: 0 auto;
+    margin: 24px auto 0;
     padding: 0 20px;
-}
-
-.date-section {
-    margin-bottom: 36px;
 }
 
 .cards-grid {
@@ -72,82 +111,10 @@ h1 {
     gap: 16px;
 }
 
-.cards-grid .park-card {
-    margin-bottom: 0;
-}
-
-@media (max-width: 640px) {
-    header {
-        padding: 28px 16px 20px;
-    }
-
-    #content, #errors {
-        padding: 0 12px;
-    }
-
-    .cards-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .park-header {
-        font-size: 0.8rem;
-        padding: 12px 14px;
-    }
-
-    .park-header img {
-        width: 22px;
-        height: 22px;
-    }
-
-    table th:nth-child(2), table td:nth-child(2) { width: 80px; }
-    table th:nth-child(3), table td:nth-child(3) { width: 90px; }
-
-    th {
-        padding: 8px 14px;
-        font-size: 0.65rem;
-    }
-
-    td {
-        padding: 10px 14px;
-        font-size: 0.82rem;
-    }
-
-    .status {
-        font-size: 0.65rem;
-        padding: 3px 8px;
-    }
-}
-
-.date-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    margin-bottom: 16px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #7dd3fc;
-    border-bottom: 1px solid rgba(125, 211, 252, 0.2);
-}
-
-.date-header::before {
-    content: '';
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #7dd3fc;
-    box-shadow: 0 0 8px #7dd3fc;
-    flex-shrink: 0;
-}
-
 .park-card {
     background: rgba(15, 23, 42, 0.7);
     border: 1px solid rgba(51, 65, 85, 0.6);
     border-radius: 12px;
-    margin-bottom: 16px;
     overflow: hidden;
     backdrop-filter: blur(8px);
     transition: border-color 0.2s;
@@ -299,6 +266,58 @@ td:last-child {
     content: '⚠';
     flex-shrink: 0;
 }
+
+@media (max-width: 640px) {
+    header {
+        padding: 28px 16px 16px;
+    }
+
+    #date-tabs {
+        padding: 16px 12px 0;
+        gap: 6px;
+    }
+
+    .date-tab {
+        padding: 7px 14px;
+        font-size: 0.72rem;
+    }
+
+    #content, #errors {
+        padding: 0 12px;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .park-header {
+        font-size: 0.8rem;
+        padding: 12px 14px;
+    }
+
+    .park-header img {
+        width: 22px;
+        height: 22px;
+    }
+
+    table th:nth-child(2), table td:nth-child(2) { width: 80px; }
+    table th:nth-child(3), table td:nth-child(3) { width: 90px; }
+
+    th {
+        padding: 8px 14px;
+        font-size: 0.65rem;
+    }
+
+    td {
+        padding: 10px 14px;
+        font-size: 0.82rem;
+    }
+
+    .status {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+}
 </style>
 </head>
 
@@ -309,8 +328,8 @@ td:last-child {
     <div id="updated">Loading...</div>
 </header>
 
+<div id="date-tabs"></div>
 <div id="errors"></div>
-
 <div id="content"></div>
 
 <script>
@@ -336,19 +355,13 @@ async function loadData() {
         }
 
         const grouped = {};
-
         const today = new Date().toISOString().slice(0, 10);
+        const tomorrowStr = new Date(new Date().getTime() + 86400000).toISOString().slice(0, 10);
 
         data.items.forEach(item => {
             if (item.date < today) return;
-            if (!grouped[item.date]) {
-                grouped[item.date] = {};
-            }
-
-            if (!grouped[item.date][item.park]) {
-                grouped[item.date][item.park] = [];
-            }
-
+            if (!grouped[item.date]) grouped[item.date] = {};
+            if (!grouped[item.date][item.park]) grouped[item.date][item.park] = [];
             grouped[item.date][item.park].push(item);
         });
 
@@ -359,60 +372,68 @@ async function loadData() {
             'Animal Kingdom': 'icons/animal-kingdom.svg',
         };
 
-        let html = '';
+        const dates = Object.keys(grouped).sort();
 
-        Object.keys(grouped)
-            .sort()
-            .forEach(date => {
+        function dateLabel(date) {
+            if (date === today) return 'Today';
+            if (date === tomorrowStr) return 'Tomorrow';
+            const d = new Date(date + 'T12:00:00');
+            return d.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })
+                + ' · ' + d.toLocaleDateString(undefined, { weekday: 'short' });
+        }
 
-                const dateObj = new Date(date + 'T12:00:00');
-                const dateLabel = dateObj.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric' })
-                    + ' - ' + dateObj.toLocaleDateString(undefined, { weekday: 'long' });
-                html += `<div class="date-section"><div class="date-header">${dateLabel}</div><div class="cards-grid">`;
-
-                Object.keys(grouped[date])
-                    .sort()
-                    .forEach(park => {
-
-                        const iconSrc = parkIcons[park] || '';
-                        const iconHtml = iconSrc ? `<img src="${iconSrc}" alt="">` : '';
-
-                        html += `
-                            <div class="park-card">
-                                <div class="park-header">${iconHtml}${park}</div>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Ride</th>
-                                            <th>Price</th>
-                                            <th>Available</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                        `;
-
-                        grouped[date][park].forEach(item => {
-
-                            html += `
-                                <tr class="${item.available ? 'available' : 'unavailable'}">
-                                    <td>${item.ride}</td>
-                                    <td class="price">${item.price_formatted}</td>
-                                    <td><span class="status ${item.available ? 'yes' : 'no'}">${item.available ? 'YES' : 'NO'}</span></td>
+        function renderDate(date) {
+            const parks = grouped[date];
+            let html = '<div class="cards-grid">';
+            Object.keys(parks).sort().forEach(park => {
+                const iconSrc = parkIcons[park] || '';
+                const iconHtml = iconSrc ? `<img src="${iconSrc}" alt="">` : '';
+                html += `
+                    <div class="park-card">
+                        <div class="park-header">${iconHtml}${park}</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ride</th>
+                                    <th>Price</th>
+                                    <th>Available</th>
                                 </tr>
-                            `;
-                        });
-
-                        html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
-                    });
-
-                html += `</div></div>`;
+                            </thead>
+                            <tbody>
+                `;
+                parks[park].forEach(item => {
+                    html += `
+                        <tr class="${item.available ? 'available' : 'unavailable'}">
+                            <td>${item.ride}</td>
+                            <td class="price">${item.price_formatted}</td>
+                            <td><span class="status ${item.available ? 'yes' : 'no'}">${item.available ? 'YES' : 'NO'}</span></td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table></div>`;
             });
+            html += '</div>';
+            document.getElementById("content").innerHTML = html;
+        }
 
-        document.getElementById("content").innerHTML = html;
+        let activeDate = dates[0];
+
+        const tabsEl = document.getElementById("date-tabs");
+        tabsEl.innerHTML = dates.map(date => `
+            <button class="date-tab${date === activeDate ? ' active' : ''}" data-date="${date}">
+                ${dateLabel(date)}
+            </button>
+        `).join('');
+
+        tabsEl.addEventListener('click', e => {
+            const tab = e.target.closest('.date-tab');
+            if (!tab) return;
+            activeDate = tab.dataset.date;
+            tabsEl.querySelectorAll('.date-tab').forEach(t => t.classList.toggle('active', t === tab));
+            renderDate(activeDate);
+        });
+
+        renderDate(activeDate);
 
     } catch (err) {
         document.getElementById("content").innerHTML =
