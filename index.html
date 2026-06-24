@@ -317,7 +317,7 @@ td:last-child {
 async function loadData() {
     try {
         const response = await fetch(
-            `data.json?v=${Date.now()}`
+            `https://raw.githubusercontent.com/jc214809/disney-ll-watch/data/data.json?v=${Date.now()}`
         );
 
         const data = await response.json();

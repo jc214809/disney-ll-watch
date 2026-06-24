@@ -36,20 +36,15 @@ jobs:
         run: |
           python scripts/update.py
 
-      - name: Commit Updated Data
+      - name: Push Data to Orphan Branch
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
 
+          git checkout --orphan data-tmp
+          git reset
           git add data.json state.json
-
-          git diff --staged --quiet || \
           git commit -m "Update Lightning Lane data"
-
-      - name: Rebase Latest Changes
-        run: |
-          git pull --rebase origin main
-
-      - name: Push Changes
-        run: |
-          git push origin main
+          git push origin data-tmp:data --force
+          git checkout main
+          git branch -D data-tmp
