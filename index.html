@@ -66,6 +66,16 @@ h1 {
     margin-bottom: 36px;
 }
 
+.cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.cards-grid .park-card {
+    margin-bottom: 0;
+}
+
 .date-header {
     display: flex;
     align-items: center;
@@ -316,7 +326,7 @@ async function loadData() {
                 const dateObj = new Date(date + 'T12:00:00');
                 const dateLabel = dateObj.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric', year: 'numeric' })
                     + ' - ' + dateObj.toLocaleDateString(undefined, { weekday: 'long' });
-                html += `<div class="date-section"><div class="date-header">${dateLabel}</div>`;
+                html += `<div class="date-section"><div class="date-header">${dateLabel}</div><div class="cards-grid">`;
 
                 Object.keys(grouped[date])
                     .sort()
@@ -357,7 +367,7 @@ async function loadData() {
                         `;
                     });
 
-                html += `</div>`;
+                html += `</div></div>`;
             });
 
         document.getElementById("content").innerHTML = html;
