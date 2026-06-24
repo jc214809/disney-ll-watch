@@ -76,6 +76,48 @@ h1 {
     margin-bottom: 0;
 }
 
+@media (max-width: 640px) {
+    header {
+        padding: 28px 16px 20px;
+    }
+
+    #content, #errors {
+        padding: 0 12px;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .park-header {
+        font-size: 0.8rem;
+        padding: 12px 14px;
+    }
+
+    .park-header img {
+        width: 22px;
+        height: 22px;
+    }
+
+    table th:nth-child(2), table td:nth-child(2) { width: 80px; }
+    table th:nth-child(3), table td:nth-child(3) { width: 90px; }
+
+    th {
+        padding: 8px 14px;
+        font-size: 0.65rem;
+    }
+
+    td {
+        padding: 10px 14px;
+        font-size: 0.82rem;
+    }
+
+    .status {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+}
+
 .date-header {
     display: flex;
     align-items: center;
