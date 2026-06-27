@@ -46,5 +46,5 @@ jobs:
           git add data.json state.json
           git commit -m "Update Lightning Lane data"
           git push origin data-tmp:data --force
-          git checkout main
+          git checkout -f main
           git branch -D data-tmp
