@@ -148,13 +148,13 @@ h1 {
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto;
 }
 
 table th:nth-child(1), table td:nth-child(1) { width: auto; }
-table th:nth-child(2), table td:nth-child(2) { width: 80px; }
-table th:nth-child(3), table td:nth-child(3) { width: 90px; }
-table th:nth-child(4), table td:nth-child(4) { width: 160px; }
+table th:nth-child(2), table td:nth-child(2),
+table th:nth-child(3), table td:nth-child(3),
+table th:nth-child(4), table td:nth-child(4) { white-space: nowrap; width: 1%; }
 
 th {
     padding: 10px 18px;
@@ -301,9 +301,7 @@ td:last-child {
         height: 22px;
     }
 
-    table th:nth-child(2), table td:nth-child(2) { width: 60px; }
-    table th:nth-child(3), table td:nth-child(3) { width: 70px; }
-    table th:nth-child(4), table td:nth-child(4) { width: 130px; }
+    table th:nth-child(1), table td:nth-child(1) { min-width: 0; }
 
     th {
         padding: 8px 14px;
@@ -378,8 +376,9 @@ function setWsStatus(state) {
 }
 
 function formatReturnWindow(start, end) {
-    const fmt = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    return `${fmt(start)}–${fmt(end)}`;
+    const fmt = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        .replace(' AM', 'am').replace(' PM', 'pm');
+    return `${fmt(start)} – ${fmt(end)}`;
 }
 
 function renderToday() {
@@ -399,7 +398,7 @@ function renderToday() {
             <div class="park-card">
                 <div class="park-header">${iconHtml}${park}</div>
                 <table>
-                    <thead><tr><th>Ride</th><th>Standby</th><th>ILL Price</th><th>Window</th></tr></thead>
+                    <thead><tr><th>Ride</th><th>Standby</th><th>Price</th><th>Return Window</th></tr></thead>
                     <tbody>
         `;
         byPark[park].forEach(entry => {
@@ -422,7 +421,10 @@ function renderToday() {
                     <td>${entry.name}</td>
                     <td class="price">${standby}</td>
                     <td class="price">${price}</td>
-                    <td><span class="status ${statusClass}">${statusText}</span> <span style="font-size:0.75rem;color:#64748b">${available ? window : ''}</span></td>
+                    <td>
+                        <span class="status ${statusClass}">${statusText}</span>
+                        ${available ? `<div style="font-size:0.75rem;color:#94a3b8;margin-top:4px;letter-spacing:0.01em">${window}</div>` : ''}
+                    </td>
                 </tr>
             `;
         });
