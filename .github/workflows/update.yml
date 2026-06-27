@@ -36,6 +36,19 @@ jobs:
         run: |
           python scripts/update.py
 
+      - name: Inject API key into config
+        env:
+          WEBSOCKET_KEY: ${{ secrets.WEBSOCKET_KEY }}
+        run: |
+          python - <<'EOF'
+          import json, os
+          with open('config.json') as f:
+              cfg = json.load(f)
+          cfg['themeparks_api_key'] = os.environ['WEBSOCKET_KEY']
+          with open('config.json', 'w') as f:
+              json.dump(cfg, f, indent=2)
+          EOF
+
       - name: Push Data to Orphan Branch
         run: |
           git config user.name github-actions
@@ -43,7 +56,7 @@ jobs:
 
           git checkout --orphan data-tmp
           git reset
-          git add data.json state.json
+          git add data.json state.json config.json
           git commit -m "Update Lightning Lane data"
           git push origin data-tmp:data --force
           git checkout -f main

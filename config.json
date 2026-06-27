@@ -1,6 +1,7 @@
 {
   "trip_start": "2026-06-24",
   "trip_end": "2026-06-30",
+  "themeparks_api_key": "YOUR_API_KEY_HERE",
   "parks": [
     
     {
