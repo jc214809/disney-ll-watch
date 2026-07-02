@@ -1,0 +1,34 @@
+{
+  "trip_start": "2026-06-24",
+  "trip_end": "2026-06-30",
+  "themeparks_api_key": "89e4add6-30cd-4960-83a7-eb7882a1649a",
+  "parks": [
+    {
+      "name": "Magic Kingdom",
+      "id": "75ea578a-adc8-4116-a54d-dccb60765ef9"
+    },
+    {
+      "name": "EPCOT",
+      "id": "47f90d2c-e191-4239-a466-5892ef59a88b"
+    },
+    {
+      "name": "Hollywood Studios",
+      "id": "288747d1-8b4f-4a64-867e-ea7c9b27bad8"
+    },
+    {
+      "name": "Animal Kingdom",
+      "id": "1c84a229-8862-4648-9c71-378ddd2c7693"
+    }
+  ],
+  "watched_rides": [
+    "Avatar Flight of Passage",
+    "TRON Lightcycle / Run",
+    "Seven Dwarfs Mine Train",
+    "Guardians of the Galaxy: Cosmic Rewind",
+    "Star Wars: Rise of the Resistance"
+  ],
+  "notify_on_available": true,
+  "notify_on_sold_out": true,
+  "notify_on_price_drop": false,
+  "price_drop_threshold_dollars": 2
+}
