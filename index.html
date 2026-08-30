@@ -347,7 +347,8 @@ const ILL_ATTRACTIONS = [
 const ILL_IDS = new Set(ILL_ATTRACTIONS.map(a => a.id));
 const ILL_BY_ID = Object.fromEntries(ILL_ATTRACTIONS.map(a => [a.id, a]));
 
-const WS_URL = 'wss://ws.themeparks.wiki/v1/live';
+// Proxy worker URL — browser can't send custom headers directly to ThemeParks
+const WS_URL = 'wss://disney-ll-ws-proxy.disney-ll-watch.workers.dev';
 const DESTINATION_ID = 'e957da41-3552-4cf6-b636-5babc5cbc4e5';
 const RECONNECT_DELAY_MS = 5000;
 
@@ -519,9 +520,9 @@ async function seedToday() {
     }));
 }
 
-function connectWebSocket(apiKey) {
+function connectWebSocket() {
     setWsStatus('connecting');
-    const ws = new WebSocket(`${WS_URL}?apiKey=${encodeURIComponent(apiKey)}`);
+    const ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
         setWsStatus('live');
@@ -556,11 +557,6 @@ function connectWebSocket(apiKey) {
 
 async function init() {
     try {
-        // Load config (with injected API key) from the data branch
-        const cfgRes = await fetch(`https://raw.githubusercontent.com/jc214809/disney-ll-watch/data/config.json?v=${Date.now()}`);
-        const config = await cfgRes.json();
-        const apiKey = config.themeparks_api_key;
-
         // Load static data.json for future dates
         const dataRes = await fetch(
             `https://raw.githubusercontent.com/jc214809/disney-ll-watch/data/data.json?v=${Date.now()}`
@@ -576,14 +572,17 @@ async function init() {
                 data.errors.map(e => `<div class="error">${e.park}: ${e.error}</div>`).join('');
         }
 
+        const SIX_DAYS_OUT = new Date(Date.now() + 6 * 86400000).toISOString().slice(0, 10);
+
         data.items.forEach(item => {
             if (item.date <= TODAY) return; // today handled live
+            if (item.date > SIX_DAYS_OUT) return; // cap at 6 days ahead
             if (!staticGrouped[item.date]) staticGrouped[item.date] = {};
             if (!staticGrouped[item.date][item.park]) staticGrouped[item.date][item.park] = [];
             staticGrouped[item.date][item.park].push(item);
         });
 
-        // Always put today first, then future dates from data.json
+        // Today always first (live), then up to 6 future dates
         dates = [TODAY, ...Object.keys(staticGrouped).sort()];
         activeDate = TODAY;
 
@@ -592,13 +591,8 @@ async function init() {
         buildTabs();
         renderDate(activeDate);
 
-        // Open WebSocket for live updates
-        if (apiKey && apiKey !== 'YOUR_API_KEY_HERE') {
-            connectWebSocket(apiKey);
-        } else {
-            setWsStatus('off');
-            console.warn('No API key set — WebSocket disabled. Set themeparks_api_key in config.json.');
-        }
+        // Open WebSocket for live updates via proxy worker
+        connectWebSocket();
 
     } catch (err) {
         document.getElementById('content').innerHTML = `<div class="error">${err}</div>`;
