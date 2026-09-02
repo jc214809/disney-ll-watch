@@ -29,6 +29,11 @@ jobs:
         run: |
           pip install requests
 
+      - name: Restore state from data branch
+        run: |
+          git fetch origin data:data 2>/dev/null || true
+          git show data:state.json > state.json 2>/dev/null || true
+
       - name: Run Updater
         env:
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
