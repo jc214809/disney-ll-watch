@@ -2,6 +2,8 @@ name: Update Lightning Lane Data
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
 
 permissions:
   contents: write
