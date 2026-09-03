@@ -1,4 +1,4 @@
-const UPSTREAM = 'wss://ws.themeparks.wiki/v1/live';
+const UPSTREAM = 'https://ws.themeparks.wiki/v1/live';
 
 export default {
     async fetch(request, env, ctx) {
@@ -7,52 +7,45 @@ export default {
             return new Response('Expected WebSocket upgrade', { status: 426 });
         }
 
+        const upstreamResp = await fetch(UPSTREAM, {
+            headers: {
+                Upgrade: 'websocket',
+                Connection: 'Upgrade',
+                'X-API-Key': env.THEMEPARKS_API_KEY,
+            },
+        });
+
+        const upstream = upstreamResp.webSocket;
+        if (!upstream) {
+            return new Response('Upstream WebSocket failed', { status: 502 });
+        }
+        upstream.accept();
+
         const { 0: client, 1: server } = new WebSocketPair();
         server.accept();
 
-        ctx.waitUntil(handleProxy(server, env.THEMEPARKS_API_KEY));
+        // Send auth message immediately
+        upstream.send(JSON.stringify({ type: 'auth', apiKey: env.THEMEPARKS_API_KEY }));
+
+        upstream.addEventListener('message', ({ data }) => {
+            try { server.send(data); } catch {}
+        });
+        upstream.addEventListener('close', ({ code, reason }) => {
+            try { server.close(code, reason); } catch {}
+        });
+
+        server.addEventListener('message', ({ data }) => {
+            try { upstream.send(data); } catch {}
+        });
+        server.addEventListener('close', ({ code, reason }) => {
+            try { upstream.close(code, reason); } catch {}
+        });
+
+        ctx.waitUntil(new Promise(resolve => {
+            server.addEventListener('close', resolve);
+            upstream.addEventListener('close', resolve);
+        }));
 
         return new Response(null, { status: 101, webSocket: client });
     },
 };
-
-async function handleProxy(server, apiKey) {
-    const upstream = new WebSocket(UPSTREAM, {
-        headers: { 'X-API-Key': apiKey },
-    });
-
-    const serverQueue = [];
-    let upstreamReady = false;
-
-    upstream.addEventListener('open', () => {
-        upstreamReady = true;
-        for (const msg of serverQueue) {
-            try { upstream.send(msg); } catch {}
-        }
-        serverQueue.length = 0;
-    });
-
-    upstream.addEventListener('message', ({ data }) => {
-        try { server.send(data); } catch {}
-    });
-
-    upstream.addEventListener('close', ({ code, reason }) => {
-        try { server.close(code, reason); } catch {}
-    });
-
-    upstream.addEventListener('error', () => {
-        try { server.close(1011, 'Upstream error'); } catch {}
-    });
-
-    server.addEventListener('message', ({ data }) => {
-        if (upstreamReady) {
-            try { upstream.send(data); } catch {}
-        } else {
-            serverQueue.push(data);
-        }
-    });
-
-    server.addEventListener('close', ({ code, reason }) => {
-        try { upstream.close(code, reason); } catch {}
-    });
-}
