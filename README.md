@@ -1,6 +1,6 @@
 # Disney Lightning Lane Watch
 
-Real-time Individual Lightning Lane availability dashboard for Walt Disney World. Shows live ILL prices, standby wait times, and return windows for today using the ThemeParks Wiki WebSocket API. Future trip dates show schedule data fetched every 5 minutes via GitHub Actions.
+Real-time Individual Lightning Lane availability dashboard for Walt Disney World. Shows live ILL prices, standby wait times, and return windows for today from the ThemeParks Wiki API (REST polling by default, optional WebSocket). Future trip dates show schedule data pulled by a GitHub Actions workflow.
 
 **Live site:** https://jc214809.github.io/disney-ll-watch/
 
@@ -8,14 +8,14 @@ Real-time Individual Lightning Lane availability dashboard for Walt Disney World
 
 ## How It Works
 
-### Today tab — live via WebSocket
+### Today tab — REST polling (default) or WebSocket
 1. On load, seeds today's data immediately from the ThemeParks REST API (no key needed).
-2. Connects to a Cloudflare Worker proxy (`wss://disney-ll-ws-proxy.disney-ll-watch.workers.dev`) which forwards the connection to `wss://ws.themeparks.wiki/v1/live` with the `X-API-Key` header. The browser can't send custom headers in a native WebSocket, so the proxy is required.
-3. Incoming `livedata` events are filtered to the 5 tracked ILL attractions and the UI updates in real time.
-4. A `● Live` / `● Connecting…` / `● Reconnecting…` indicator shows WebSocket state.
+2. **Polling mode (default, `USE_WEBSOCKET = false` in `index.html`):** re-fetches the 5 tracked attractions every 60 seconds (`POLL_INTERVAL_MS`), paused while the tab is hidden. No API key or Worker needed. Cost is 5 requests per poll per open tab.
+3. **WebSocket mode (`USE_WEBSOCKET = true`):** connects to a Cloudflare Worker proxy (`wss://disney-ll-ws-proxy.disney-ll-watch.workers.dev`) which forwards the connection to `wss://ws.themeparks.wiki/v1/live` with the `X-API-Key` header. The browser can't send custom headers in a native WebSocket, so the proxy is required, along with a ThemeParks API key set as the Worker secret.
+4. In WebSocket mode, incoming `livedata` events are filtered to the 5 tracked ILL attractions and the UI updates in real time. A `● Live` / `● Connecting…` / `● Reconnecting…` indicator shows WebSocket state (hidden in polling mode).
 
 ### Future date tabs — scheduled REST pulls
-- GitHub Actions fetches the ThemeParks schedule API every 5 minutes and writes `data.json` + `state.json` to an orphan `data` branch.
+- The **Update Lightning Lane Data** workflow (`.github/workflows/update.yml`) fetches the ThemeParks schedule API and writes `data.json` + `state.json` to an orphan `data` branch. It is `workflow_dispatch` only — there is no built-in schedule. Run it manually from the Actions tab, or trigger it on a cadence from an external cron via the GitHub API (`POST /repos/{owner}/{repo}/actions/workflows/update.yml/dispatches`).
 - The browser fetches that `data.json` for future dates.
 - Pushover alerts fire when a watched ride changes availability or price.
 
@@ -35,11 +35,11 @@ Real-time Individual Lightning Lane availability dashboard for Walt Disney World
 ```
 Browser
   └── fetches data.json from GitHub (data branch) — future dates
-  └── seeds today via REST  https://api.themeparks.wiki/v1/entity/{id}/live
-  └── WebSocket → Cloudflare Worker → wss://ws.themeparks.wiki/v1/live
+  └── seeds + polls today via REST (every 60s)  https://api.themeparks.wiki/v1/entity/{id}/live
+  └── [optional, USE_WEBSOCKET=true] WebSocket → Cloudflare Worker → wss://ws.themeparks.wiki/v1/live
                                            (X-API-Key header added by worker)
 
-GitHub Actions (every 5 min)
+GitHub Actions (workflow_dispatch, triggered manually or by external cron)
   └── scripts/update.py → data.json + state.json → push to data branch
 ```
 
@@ -58,8 +58,8 @@ In repo Settings → Secrets → Actions:
 | `PUSHOVER_APP_TOKEN` | Your Pushover app token |
 | `PUSHOVER_USER_KEY` | Your Pushover user key |
 
-### 3. Deploy the Cloudflare Worker proxy
-The worker lives in `worker/index.js`. It proxies WebSocket connections from the browser to ThemeParks, adding the API key header server-side.
+### 3. (Optional) Deploy the Cloudflare Worker proxy
+Only needed for WebSocket mode — skip it if you leave `USE_WEBSOCKET = false`. The worker lives in `worker/index.js`. It proxies WebSocket connections from the browser to ThemeParks, adding the API key header server-side.
 
 ```bash
 npm install -g wrangler
@@ -75,10 +75,10 @@ wrangler secret put THEMEPARKS_API_KEY
 
 Get a free ThemeParks API key at https://api.themeparks.wiki.
 
-### 4. Update the worker URL in index.html
-After deploy, confirm line ~351 in `index.html` matches your worker URL:
+### 4. (Optional) Update the worker URL in index.html
+For WebSocket mode, set `USE_WEBSOCKET = true` and confirm `WS_URL` in `index.html` matches your deployed worker URL:
 ```js
-const WS_URL = 'wss://disney-ll-watch.workers.dev';
+const WS_URL = 'wss://disney-ll-ws-proxy.disney-ll-watch.workers.dev';
 ```
 
 ### 5. Trigger the first data pull
@@ -111,7 +111,7 @@ Edit `config.json` on `main`:
 
 | Where | What | How |
 |---|---|---|
-| Cloudflare Worker secret store | ThemeParks API key | `wrangler secret put THEMEPARKS_API_KEY` |
+| Cloudflare Worker secret store | ThemeParks API key (WebSocket mode only) | `wrangler secret put THEMEPARKS_API_KEY` |
 | GitHub Actions secrets | Pushover tokens | Repo Settings → Secrets |
 
 The ThemeParks API key never appears in the repo or in browser network traffic.
@@ -125,7 +125,7 @@ python3 -m http.server 8743 --directory .
 # open http://localhost:8743
 ```
 
-The WebSocket will connect through the deployed Cloudflare Worker as normal. The REST seed calls work without any key.
+In the default polling mode no key or Worker is needed. With `USE_WEBSOCKET = true` the page connects through the deployed Cloudflare Worker.
 
 ---
 

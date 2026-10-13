@@ -351,6 +351,10 @@ const ILL_BY_ID = Object.fromEntries(ILL_ATTRACTIONS.map(a => [a.id, a]));
 const WS_URL = 'wss://disney-ll-ws-proxy.disney-ll-watch.workers.dev';
 const DESTINATION_ID = 'e957da41-3552-4cf6-b636-5babc5cbc4e5';
 const RECONNECT_DELAY_MS = 5000;
+// Set false if no ThemeParks API key is available for the proxy worker;
+// today's data is then refreshed by polling the keyless REST endpoint.
+const USE_WEBSOCKET = false;
+const POLL_INTERVAL_MS = 60000;
 
 const parkIcons = {
     'Magic Kingdom':    'icons/magic-kingdom.svg',
@@ -367,11 +371,17 @@ let staticGrouped = {};
 let dates = [];
 let activeDate = null;
 
-function setWsStatus(state) {
+function setWsStatus(state, detail = '') {
     const el = document.getElementById('ws-status');
     if (!el) return;
-    const labels = { connecting: '● Connecting…', live: '● Live', reconnecting: '● Reconnecting…', off: '' };
-    const colors = { connecting: '#94a3b8', live: '#4ade80', reconnecting: '#fbbf24', off: 'transparent' };
+    const labels = {
+        connecting: '● Connecting…', live: '● Live', reconnecting: '● Reconnecting…', off: '',
+        polling: `● Updated ${detail}`, partial: `⚠ ${detail} ride(s) failed to update`, stale: `⚠ Update failed — showing data from ${detail}`,
+    };
+    const colors = {
+        connecting: '#94a3b8', live: '#4ade80', reconnecting: '#fbbf24', off: 'transparent',
+        polling: '#4ade80', partial: '#fbbf24', stale: '#fbbf24',
+    };
     el.textContent = labels[state] || '';
     el.style.color = colors[state] || '#94a3b8';
 }
@@ -500,10 +510,13 @@ function buildTabs() {
     });
 }
 
+// Returns the number of attractions that failed to refresh.
 async function seedToday() {
+    let failures = 0;
     await Promise.all(ILL_ATTRACTIONS.map(async ({ name, id }) => {
         try {
             const res = await fetch(`https://api.themeparks.wiki/v1/entity/${id}/live`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const { liveData: ld } = await res.json();
             const entry = ld?.[0];
             if (entry) {
@@ -515,9 +528,29 @@ async function seedToday() {
                 };
             }
         } catch (e) {
+            failures++;
             console.warn(`Seed failed for ${name}:`, e);
         }
     }));
+    return failures;
+}
+
+function startPolling() {
+    const fmt = d => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    let lastGood = new Date(); // initial seed just ran in init()
+    setWsStatus('polling', fmt(lastGood));
+    setInterval(async () => {
+        if (document.hidden) return;
+        const failures = await seedToday();
+        if (failures === ILL_ATTRACTIONS.length) {
+            setWsStatus('stale', fmt(lastGood));
+            return;
+        }
+        lastGood = new Date();
+        if (failures) setWsStatus('partial', failures);
+        else setWsStatus('polling', fmt(lastGood));
+        if (activeDate === TODAY) renderToday();
+    }, POLL_INTERVAL_MS);
 }
 
 function connectWebSocket() {
@@ -551,7 +584,7 @@ function connectWebSocket() {
     ws.onerror = () => setWsStatus('reconnecting');
     ws.onclose = () => {
         setWsStatus('reconnecting');
-        setTimeout(() => connectWebSocket(apiKey), RECONNECT_DELAY_MS);
+        setTimeout(connectWebSocket, RECONNECT_DELAY_MS);
     };
 }
 
@@ -591,8 +624,12 @@ async function init() {
         buildTabs();
         renderDate(activeDate);
 
-        // Open WebSocket for live updates via proxy worker
-        connectWebSocket();
+        if (USE_WEBSOCKET) {
+            // Live updates via proxy worker
+            connectWebSocket();
+        } else {
+            startPolling();
+        }
 
     } catch (err) {
         document.getElementById('content').innerHTML = `<div class="error">${err}</div>`;

@@ -7,6 +7,20 @@
       "request": "launch",
       "command": "python3 -m http.server 8743 --directory .",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Open in Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8743",
+      "webRoot": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Serve + Open in Chrome",
+      "configurations": ["Serve Site", "Open in Chrome"],
+      "stopAll": true
     }
   ]
 }
