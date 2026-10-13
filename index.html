@@ -351,6 +351,10 @@ const ILL_BY_ID = Object.fromEntries(ILL_ATTRACTIONS.map(a => [a.id, a]));
 const WS_URL = 'wss://disney-ll-ws-proxy.disney-ll-watch.workers.dev';
 const DESTINATION_ID = 'e957da41-3552-4cf6-b636-5babc5cbc4e5';
 const RECONNECT_DELAY_MS = 5000;
+// Set false if no ThemeParks API key is available for the proxy worker;
+// today's data is then refreshed by polling the keyless REST endpoint.
+const USE_WEBSOCKET = false;
+const POLL_INTERVAL_MS = 60000;
 
 const parkIcons = {
     'Magic Kingdom':    'icons/magic-kingdom.svg',
@@ -520,6 +524,15 @@ async function seedToday() {
     }));
 }
 
+function startPolling() {
+    setWsStatus('off');
+    setInterval(async () => {
+        if (document.hidden) return;
+        await seedToday();
+        if (activeDate === TODAY) renderToday();
+    }, POLL_INTERVAL_MS);
+}
+
 function connectWebSocket() {
     setWsStatus('connecting');
     const ws = new WebSocket(WS_URL);
@@ -551,7 +564,7 @@ function connectWebSocket() {
     ws.onerror = () => setWsStatus('reconnecting');
     ws.onclose = () => {
         setWsStatus('reconnecting');
-        setTimeout(() => connectWebSocket(apiKey), RECONNECT_DELAY_MS);
+        setTimeout(connectWebSocket, RECONNECT_DELAY_MS);
     };
 }
 
@@ -591,8 +604,12 @@ async function init() {
         buildTabs();
         renderDate(activeDate);
 
-        // Open WebSocket for live updates via proxy worker
-        connectWebSocket();
+        if (USE_WEBSOCKET) {
+            // Live updates via proxy worker
+            connectWebSocket();
+        } else {
+            startPolling();
+        }
 
     } catch (err) {
         document.getElementById('content').innerHTML = `<div class="error">${err}</div>`;
