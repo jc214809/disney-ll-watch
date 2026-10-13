@@ -371,11 +371,17 @@ let staticGrouped = {};
 let dates = [];
 let activeDate = null;
 
-function setWsStatus(state) {
+function setWsStatus(state, detail = '') {
     const el = document.getElementById('ws-status');
     if (!el) return;
-    const labels = { connecting: '● Connecting…', live: '● Live', reconnecting: '● Reconnecting…', off: '' };
-    const colors = { connecting: '#94a3b8', live: '#4ade80', reconnecting: '#fbbf24', off: 'transparent' };
+    const labels = {
+        connecting: '● Connecting…', live: '● Live', reconnecting: '● Reconnecting…', off: '',
+        polling: `● Updated ${detail}`, partial: `⚠ ${detail} ride(s) failed to update`, stale: `⚠ Update failed — showing data from ${detail}`,
+    };
+    const colors = {
+        connecting: '#94a3b8', live: '#4ade80', reconnecting: '#fbbf24', off: 'transparent',
+        polling: '#4ade80', partial: '#fbbf24', stale: '#fbbf24',
+    };
     el.textContent = labels[state] || '';
     el.style.color = colors[state] || '#94a3b8';
 }
@@ -504,10 +510,13 @@ function buildTabs() {
     });
 }
 
+// Returns the number of attractions that failed to refresh.
 async function seedToday() {
+    let failures = 0;
     await Promise.all(ILL_ATTRACTIONS.map(async ({ name, id }) => {
         try {
             const res = await fetch(`https://api.themeparks.wiki/v1/entity/${id}/live`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const { liveData: ld } = await res.json();
             const entry = ld?.[0];
             if (entry) {
@@ -519,16 +528,27 @@ async function seedToday() {
                 };
             }
         } catch (e) {
+            failures++;
             console.warn(`Seed failed for ${name}:`, e);
         }
     }));
+    return failures;
 }
 
 function startPolling() {
-    setWsStatus('off');
+    const fmt = d => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    let lastGood = new Date(); // initial seed just ran in init()
+    setWsStatus('polling', fmt(lastGood));
     setInterval(async () => {
         if (document.hidden) return;
-        await seedToday();
+        const failures = await seedToday();
+        if (failures === ILL_ATTRACTIONS.length) {
+            setWsStatus('stale', fmt(lastGood));
+            return;
+        }
+        lastGood = new Date();
+        if (failures) setWsStatus('partial', failures);
+        else setWsStatus('polling', fmt(lastGood));
         if (activeDate === TODAY) renderToday();
     }, POLL_INTERVAL_MS);
 }
