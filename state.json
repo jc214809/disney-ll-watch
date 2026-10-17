@@ -1,0 +1,152 @@
+{
+  "2026-10-21|Animal Kingdom|Avatar Flight of Passage": {
+    "available": true,
+    "price_amount": 1700,
+    "price_formatted": "$17.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-21|EPCOT|Guardians of the Galaxy: Cosmic Rewind": {
+    "available": true,
+    "price_amount": 2100,
+    "price_formatted": "$21.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-21|Hollywood Studios|Star Wars: Rise of the Resistance": {
+    "available": true,
+    "price_amount": 2400,
+    "price_formatted": "$24.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-21|Magic Kingdom|Seven Dwarfs Mine Train": {
+    "available": true,
+    "price_amount": 1500,
+    "price_formatted": "$15.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-21|Magic Kingdom|TRON Lightcycle / Run": {
+    "available": true,
+    "price_amount": 2300,
+    "price_formatted": "$23.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-22|Animal Kingdom|Avatar Flight of Passage": {
+    "available": true,
+    "price_amount": 1800,
+    "price_formatted": "$18.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-22|EPCOT|Guardians of the Galaxy: Cosmic Rewind": {
+    "available": true,
+    "price_amount": 2100,
+    "price_formatted": "$21.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-22|Hollywood Studios|Star Wars: Rise of the Resistance": {
+    "available": true,
+    "price_amount": 2400,
+    "price_formatted": "$24.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-22|Magic Kingdom|Seven Dwarfs Mine Train": {
+    "available": false,
+    "price_amount": 1400,
+    "price_formatted": "$14.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-22|Magic Kingdom|TRON Lightcycle / Run": {
+    "available": true,
+    "price_amount": 2200,
+    "price_formatted": "$22.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-23|Animal Kingdom|Avatar Flight of Passage": {
+    "available": true,
+    "price_amount": 1900,
+    "price_formatted": "$19.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-23|EPCOT|Guardians of the Galaxy: Cosmic Rewind": {
+    "available": true,
+    "price_amount": 2200,
+    "price_formatted": "$22.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-23|Hollywood Studios|Star Wars: Rise of the Resistance": {
+    "available": true,
+    "price_amount": 2500,
+    "price_formatted": "$25.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-23|Magic Kingdom|Seven Dwarfs Mine Train": {
+    "available": true,
+    "price_amount": 1400,
+    "price_formatted": "$14.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-23|Magic Kingdom|TRON Lightcycle / Run": {
+    "available": true,
+    "price_amount": 2200,
+    "price_formatted": "$22.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-24|Animal Kingdom|Avatar Flight of Passage": {
+    "available": true,
+    "price_amount": 1900,
+    "price_formatted": "$19.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-24|EPCOT|Guardians of the Galaxy: Cosmic Rewind": {
+    "available": true,
+    "price_amount": 2200,
+    "price_formatted": "$22.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-24|Hollywood Studios|Star Wars: Rise of the Resistance": {
+    "available": true,
+    "price_amount": 2500,
+    "price_formatted": "$25.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-24|Magic Kingdom|Seven Dwarfs Mine Train": {
+    "available": true,
+    "price_amount": 1500,
+    "price_formatted": "$15.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-24|Magic Kingdom|TRON Lightcycle / Run": {
+    "available": true,
+    "price_amount": 2300,
+    "price_formatted": "$23.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-25|Animal Kingdom|Avatar Flight of Passage": {
+    "available": true,
+    "price_amount": 1800,
+    "price_formatted": "$18.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-25|EPCOT|Guardians of the Galaxy: Cosmic Rewind": {
+    "available": true,
+    "price_amount": 2200,
+    "price_formatted": "$22.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-25|Hollywood Studios|Star Wars: Rise of the Resistance": {
+    "available": true,
+    "price_amount": 2400,
+    "price_formatted": "$24.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-25|Magic Kingdom|Seven Dwarfs Mine Train": {
+    "available": true,
+    "price_amount": 1400,
+    "price_formatted": "$14.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  },
+  "2026-10-25|Magic Kingdom|TRON Lightcycle / Run": {
+    "available": true,
+    "price_amount": 2300,
+    "price_formatted": "$23.00",
+    "seen_at": "2026-10-17T22:05:13Z"
+  }
+}
