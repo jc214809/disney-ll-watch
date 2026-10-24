@@ -176,6 +176,8 @@ function rideRow(r) {
 }
 
 function render() {
+    // Keep expanded sections open across the 60s re-render.
+    const openKeys = new Set([...document.querySelectorAll('details[open]')].map(d => d.dataset.key));
     const downTotal = Object.values(parkRides).flat().filter(r => r.status === 'DOWN').length;
     const summary = document.getElementById('summary');
     summary.className = downTotal ? 'bad' : 'good';
@@ -198,8 +200,8 @@ function render() {
                     <span class="count ${down.length ? 'bad' : 'good'}">${down.length ? `${down.length} down` : 'All up'}</span>
                 </div>
                 ${down.length ? `<div class="section-label down">Down now</div>${down.map(rideRow).join('')}` : ''}
-                ${operating.length ? `<div class="section-label">Operating (${operating.length})</div>${operating.map(rideRow).join('')}` : ''}
-                ${other.length ? `<details class="others"><summary>Closed / refurbishment (${other.length})</summary>${other.map(rideRow).join('')}</details>` : ''}
+                ${operating.length ? `<details class="others" data-key="${esc(name)}|op"${openKeys.has(name + '|op') ? ' open' : ''}><summary>Operating (${operating.length})</summary>${operating.map(rideRow).join('')}</details>` : ''}
+                ${other.length ? `<details class="others" data-key="${esc(name)}|other"${openKeys.has(name + '|other') ? ' open' : ''}><summary>Closed / refurbishment (${other.length})</summary>${other.map(rideRow).join('')}</details>` : ''}
             </div>`;
     }).join('') + '</div>';
 }
