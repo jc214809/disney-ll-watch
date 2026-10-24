@@ -11,8 +11,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config.json"
 DATA_PATH = ROOT / "data.json"
 STATE_PATH = ROOT / "state.json"
+DOWN_STATE_PATH = ROOT / "down_state.json"
 
 API_BASE = "https://api.themeparks.wiki/v1/entity/{park_id}/schedule/{year}/{month:02d}"
+LIVE_API = "https://api.themeparks.wiki/v1/entity/{park_id}/live"
 PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
 
 
@@ -169,6 +171,54 @@ def build_alerts(config, items, old_state):
     return alerts
 
 
+def fetch_live(park_id):
+    resp = requests.get(
+        LIVE_API.format(park_id=park_id), timeout=30, headers={"User-Agent": "disney-ll-watch/1.0"}
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def fetch_down_rides(config):
+    """Return ({entity_id: {name, park}} for rides currently DOWN, set of parks fetched, errors)."""
+    down = {}
+    fetched = set()
+    errors = []
+    for park in config.get("parks", []):
+        try:
+            payload = fetch_live(park["id"])
+        except Exception as exc:
+            errors.append({"park": park["name"], "down_check": True, "error": str(exc)})
+            continue
+        fetched.add(park["name"])
+        for entry in payload.get("liveData", []):
+            if entry.get("entityType") == "ATTRACTION" and entry.get("status") == "DOWN":
+                down[entry["id"]] = {"name": entry.get("name", "Unknown Ride"), "park": park["name"]}
+    return down, fetched, errors
+
+
+def build_down_alerts(config, down, fetched, old_down):
+    """Alert on rides that newly went DOWN. Returns (alerts, new_down_state).
+
+    old_down is None on first run (no alerts). Rides in parks whose fetch failed
+    keep their previous state so a blip doesn't cause a repeat alert later.
+    """
+    new_state = dict(down)
+    if old_down is None:
+        return [], new_state
+    for ride_id, info in old_down.items():
+        if info.get("park") not in fetched:
+            new_state.setdefault(ride_id, info)
+    if not config.get("notify_on_ride_down", True):
+        return [], new_state
+    alerts = [
+        {"title": "Ride Down", "message": f'{info["name"]}\n{info["park"]}'}
+        for ride_id, info in sorted(down.items(), key=lambda kv: (kv[1]["park"], kv[1]["name"]))
+        if ride_id not in old_down
+    ]
+    return alerts, new_state
+
+
 def main():
     config = load_json(CONFIG_PATH, {})
     if not config:
@@ -185,6 +235,20 @@ def main():
             send_pushover(alert["title"], alert["message"])
         except Exception as exc:
             errors.append({"pushover": alert, "error": str(exc)})
+
+    down, fetched, down_errors = fetch_down_rides(config)
+    errors.extend(down_errors)
+    old_down = load_json(DOWN_STATE_PATH, None)
+    if not isinstance(old_down, dict):
+        old_down = None
+    down_alerts, new_down = build_down_alerts(config, down, fetched, old_down)
+    for alert in down_alerts:
+        print(f'Sending alert: {alert["title"]} - {alert["message"]}')
+        try:
+            send_pushover(alert["title"], alert["message"])
+        except Exception as exc:
+            errors.append({"pushover": alert, "error": str(exc)})
+    write_json(DOWN_STATE_PATH, new_down)
 
     new_state = {
         item_key(item): {
@@ -205,7 +269,7 @@ def main():
         "errors": errors,
     })
 
-    print(f"Updated {len(items)} Lightning Lane Single Pass records; {len(alerts)} alerts")
+    print(f"Updated {len(items)} Lightning Lane Single Pass records; {len(alerts)} alerts; {len(down)} rides down, {len(down_alerts)} down alerts")
     return 0
 
 

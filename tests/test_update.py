@@ -227,6 +227,8 @@ def test_main_writes_data_and_state_and_survives_pushover_failure(monkeypatch, t
     monkeypatch.setattr(update, "CONFIG_PATH", cfg)
     monkeypatch.setattr(update, "DATA_PATH", tmp_path / "data.json")
     monkeypatch.setattr(update, "STATE_PATH", tmp_path / "state.json")
+    monkeypatch.setattr(update, "DOWN_STATE_PATH", tmp_path / "down_state.json")
+    monkeypatch.setattr(update, "fetch_live", lambda park_id: {"liveData": []})
 
     item_payload = schedule(operating("2026-10-22", [purchase(available=True)]))
     monkeypatch.setattr(update, "fetch_month", lambda *a: (item_payload, "http://x"))
@@ -245,6 +247,66 @@ def test_main_writes_data_and_state_and_survives_pushover_failure(monkeypatch, t
     assert len(data["items"]) == 1
     assert data["errors"][0]["error"] == "pushover down"
     assert state[key]["available"] is True
+
+
+# ---- down rides ------------------------------------------------------------
+
+def live_payload(*rides):
+    return {"liveData": [
+        {"id": i, "name": n, "entityType": t, "status": st} for i, n, t, st in rides
+    ]}
+
+
+def test_fetch_down_rides_filters_to_down_attractions(monkeypatch):
+    monkeypatch.setattr(update, "fetch_live", lambda pid: live_payload(
+        ("a", "Space Mountain", "ATTRACTION", "DOWN"),
+        ("b", "Dumbo", "ATTRACTION", "OPERATING"),
+        ("c", "Some Show", "SHOW", "DOWN"),
+    ))
+    down, fetched, errors = update.fetch_down_rides({"parks": [{"name": "MK", "id": "x"}]})
+    assert down == {"a": {"name": "Space Mountain", "park": "MK"}}
+    assert fetched == {"MK"} and errors == []
+
+
+def test_fetch_down_rides_records_errors(monkeypatch):
+    def boom(pid):
+        raise RuntimeError("nope")
+    monkeypatch.setattr(update, "fetch_live", boom)
+    down, fetched, errors = update.fetch_down_rides({"parks": [{"name": "MK", "id": "x"}]})
+    assert down == {} and fetched == set() and errors[0]["error"] == "nope"
+
+
+def test_down_alerts_first_run_sends_nothing():
+    down = {"a": {"name": "Space Mountain", "park": "MK"}}
+    alerts, state = update.build_down_alerts({}, down, {"MK"}, None)
+    assert alerts == [] and state == down
+
+
+def test_down_alerts_only_for_newly_down():
+    old = {"a": {"name": "Space Mountain", "park": "MK"}}
+    down = {**old, "b": {"name": "Dumbo", "park": "MK"}}
+    alerts, state = update.build_down_alerts({}, down, {"MK"}, old)
+    assert [a["message"] for a in alerts] == ["Dumbo\nMK"]
+    assert set(state) == {"a", "b"}
+
+
+def test_down_alerts_ride_back_up_then_down_again_realerts():
+    old = {}
+    down = {"a": {"name": "Space Mountain", "park": "MK"}}
+    alerts, _ = update.build_down_alerts({}, down, {"MK"}, old)
+    assert len(alerts) == 1
+
+
+def test_down_alerts_failed_park_keeps_previous_state():
+    old = {"a": {"name": "Space Mountain", "park": "MK"}}
+    alerts, state = update.build_down_alerts({}, {}, set(), old)
+    assert alerts == [] and "a" in state
+
+
+def test_down_alerts_respects_config_toggle():
+    down = {"a": {"name": "Space Mountain", "park": "MK"}}
+    alerts, state = update.build_down_alerts({"notify_on_ride_down": False}, down, {"MK"}, {})
+    assert alerts == [] and state == down
 
 
 def test_main_fails_without_config(monkeypatch, tmp_path):
