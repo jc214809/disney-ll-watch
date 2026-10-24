@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Itinerary</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #060c1a;
+    background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(29, 78, 216, 0.25), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124, 58, 237, 0.12), transparent);
+    color: #e2e8f0;
+    margin: 0;
+    min-height: 100vh;
+    padding: 0 0 60px;
+}
+
+header {
+    text-align: center;
+    padding: 48px 20px 24px;
+    background: linear-gradient(180deg, rgba(29,78,216,0.12) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(99, 155, 255, 0.1);
+}
+
+h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 50%, #f9a8d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+nav { margin-bottom: 14px; display: flex; justify-content: center; gap: 10px; }
+nav a {
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-decoration: none;
+    color: #94a3b8; padding: 5px 14px; border-radius: 999px;
+    border: 1px solid rgba(51, 65, 85, 0.8);
+}
+nav a:hover { color: #e2e8f0; }
+nav a.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-color: rgba(99, 155, 255, 0.4); }
+
+#updated {
+    font-size: 0.8rem; color: #64748b; letter-spacing: 0.04em; text-transform: uppercase;
+}
+
+#summary { margin-top: 12px; font-size: 0.9rem; font-weight: 600; }
+#summary.bad { color: #f87171; }
+#summary.good { color: #4ade80; }
+
+#errors, #content { max-width: 900px; margin: 24px auto 0; padding: 0 20px; }
+#errors { margin-top: 16px; }
+
+.error {
+    background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; margin-bottom: 8px;
+}
+
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+
+.park-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.park-card.has-down { border-color: rgba(248, 113, 113, 0.45); }
+
+.park-header {
+    display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+    background: rgba(30, 41, 59, 0.8); font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 0.03em; color: #cbd5e1; border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+}
+.park-header img { width: 28px; height: 28px; opacity: 0.85; filter: invert(1); flex-shrink: 0; }
+.park-header .count {
+    margin-left: auto; font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 999px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.count.bad { color: #f87171; background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.25); }
+.count.good { color: #4ade80; background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.25); }
+
+.section-label {
+    padding: 8px 18px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #475569;
+}
+.section-label.down { color: #f87171; background: rgba(239, 68, 68, 0.08); }
+
+.ride {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 18px; font-size: 0.86rem; color: #cbd5e1;
+    border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+}
+.ride:last-child { border-bottom: none; }
+.ride.down { background: rgba(239, 68, 68, 0.06); color: #fecaca; font-weight: 600; }
+.ride .meta { font-size: 0.75rem; color: #64748b; white-space: nowrap; font-weight: 400; }
+
+.badge {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+}
+.badge.DOWN { color: #f87171; background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.25); }
+.badge.OPERATING { color: #4ade80; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); }
+.badge.CLOSED, .badge.REFURBISHMENT { color: #94a3b8; background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); }
+
+
+#day-tabs { display: flex; gap: 8px; overflow-x: auto; max-width: 900px; margin: 20px auto 0; padding: 0 20px 4px; }
+.day-tab {
+    flex: 0 0 auto; cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: 600; color: #94a3b8;
+    background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(51, 65, 85, 0.8); border-radius: 999px; padding: 8px 16px;
+}
+.day-tab:hover { color: #e2e8f0; }
+.day-tab.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-color: rgba(99, 155, 255, 0.4); }
+.show { padding: 10px 18px; border-bottom: 1px solid rgba(30, 41, 59, 0.8); }
+.show:last-child { border-bottom: none; }
+.show .name { font-size: 0.88rem; font-weight: 600; color: #e2e8f0; }
+.show .times { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.time { font-size: 0.72rem; font-weight: 600; color: #93c5fd; background: rgba(99, 155, 255, 0.1); border: 1px solid rgba(99, 155, 255, 0.25); border-radius: 999px; padding: 2px 9px; font-variant-numeric: tabular-nums; }
+.empty { padding: 16px 18px; font-size: 0.82rem; color: #64748b; }
+@media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } header { padding: 32px 16px 18px; } #content, #errors { padding: 0 12px; } #day-tabs { padding: 0 12px 4px; } }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Daily Itinerary</h1>
+    <nav><a href="index.html">Lightning Lane</a><a href="down.html">Down Detector</a><a href="itinerary.html" class="active">Daily Itinerary</a></nav>
+    <div id="updated">Loading...</div>
+</header>
+
+<div id="day-tabs"></div>
+<div id="errors"></div>
+<div id="content"></div>
+
+<script>
+const API = 'https://api.themeparks.wiki/v1/entity';
+const DAYS = 7;
+const TZ = 'America/New_York'; // all four WDW parks
+const FALLBACK_PARKS = [
+    { name: 'Magic Kingdom',     id: '75ea578a-adc8-4116-a54d-dccb60765ef9' },
+    { name: 'EPCOT',             id: '47f90d2c-e191-4239-a466-5892ef59a88b' },
+    { name: 'Hollywood Studios', id: '288747d1-8b4f-4a64-867e-ea7c9b27bad8' },
+    { name: 'Animal Kingdom',    id: '1c84a229-8862-4648-9c71-378ddd2c7693' },
+];
+const parkIcons = {
+    'Magic Kingdom':    'icons/magic-kingdom.svg',
+    'EPCOT':            'icons/epcot.svg',
+    'Hollywood Studios':'icons/hollywood-studios.svg',
+    'Animal Kingdom':   'icons/animal-kingdom.svg',
+};
+
+let parks = FALLBACK_PARKS;
+const days = [];          // YYYY-MM-DD, next 7 days in park time
+const schedule = {};      // date -> park name -> [{ name, times: ['HH:MM'] }]
+let activeDay = null;
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function parkToday() {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date()); // YYYY-MM-DD
+}
+
+function addDays(date, n) {
+    const d = new Date(date + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+}
+
+function dayLabel(date, i) {
+    const d = new Date(date + 'T12:00:00Z');
+    const base = d.toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
+    return i === 0 ? `Today · ${base}` : base;
+}
+
+// "2026-10-24T14:30:00-04:00" -> "2:30 PM" (park-local clock time, independent of viewer timezone)
+function clock(iso) {
+    const m = /T(\d{2}):(\d{2})/.exec(iso);
+    if (!m) return null;
+    const h = +m[1];
+    return `${h % 12 || 12}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
+// Sorting key for "HH:MM" strings kept alongside the display time.
+function ingest(parkName, liveData) {
+    for (const show of liveData) {
+        if (show.entityType !== 'SHOW' || !show.showtimes) continue;
+        for (const st of show.showtimes) {
+            if (st.type === 'Operating') continue; // operating hours, not a performance
+            const date = (st.startTime || '').slice(0, 10);
+            if (!days.includes(date)) continue;
+            const time = clock(st.startTime);
+            if (!time) continue;
+            const key = (st.startTime.slice(11, 16));
+            const list = ((schedule[date] ??= {})[parkName] ??= []);
+            let entry = list.find(e => e.name === show.name); // unique shows only
+            if (!entry) list.push(entry = { name: show.name, times: [] });
+            if (!entry.times.some(t => t.key === key)) entry.times.push({ key, time });
+        }
+    }
+    for (const date of days) {
+        const list = schedule[date]?.[parkName];
+        if (!list) continue;
+        list.forEach(e => e.times.sort((a, b) => a.key.localeCompare(b.key)));
+        list.sort((a, b) => a.times[0].key.localeCompare(b.times[0].key) || a.name.localeCompare(b.name));
+    }
+}
+
+function render() {
+    document.getElementById('day-tabs').innerHTML = days.map((d, i) =>
+        `<button class="day-tab${d === activeDay ? ' active' : ''}" data-day="${d}">${dayLabel(d, i)}</button>`).join('');
+
+    document.getElementById('content').innerHTML = '<div class="cards-grid">' + parks.map(({ name }) => {
+        const shows = schedule[activeDay]?.[name] || [];
+        const icon = parkIcons[name] ? `<img src="${parkIcons[name]}" alt="">` : '';
+        const body = shows.length
+            ? shows.map(s => `<div class="show"><div class="name">${esc(s.name)}</div><div class="times">${s.times.map(t => `<span class="time">${t.time}</span>`).join('')}</div></div>`).join('')
+            : '<div class="empty">No showtimes published for this day yet.</div>';
+        return `<div class="park-card"><div class="park-header">${icon}${esc(name)}<span class="count good" style="color:#93c5fd;background:rgba(99,155,255,.12);border-color:rgba(99,155,255,.25)">${shows.length} show${shows.length === 1 ? '' : 's'}</span></div>${body}</div>`;
+    }).join('') + '</div>';
+}
+
+async function init() {
+    try {
+        const cfg = await (await fetch('config.json')).json();
+        if (cfg.parks?.length) parks = cfg.parks;
+    } catch (e) { /* use built-in park list */ }
+
+    const today = parkToday();
+    for (let i = 0; i < DAYS; i++) days.push(addDays(today, i));
+    activeDay = today;
+
+    document.getElementById('day-tabs').addEventListener('click', e => {
+        const tab = e.target.closest('.day-tab');
+        if (!tab) return;
+        activeDay = tab.dataset.day;
+        render();
+    });
+
+    let failures = 0;
+    await Promise.all(parks.map(async ({ name, id }) => {
+        try {
+            const res = await fetch(`${API}/${id}/live`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            ingest(name, (await res.json()).liveData || []);
+        } catch (e) {
+            failures++;
+            console.warn(`Failed to load ${name}:`, e);
+            document.getElementById('errors').innerHTML += `<div class="error">${esc(name)}: could not load showtimes</div>`;
+        }
+    }));
+
+    document.getElementById('updated').textContent = failures === parks.length
+        ? 'Could not load showtimes'
+        : `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · times shown in park time (ET)`;
+    render();
+}
+
+init();
+</script>
+
+</body>
+</html>
