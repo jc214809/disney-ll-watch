@@ -124,6 +124,9 @@ nav a.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-colo
 .show .name { font-size: 0.88rem; font-weight: 600; color: #e2e8f0; }
 .show .times { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
 .time { font-size: 0.72rem; font-weight: 600; color: #93c5fd; background: rgba(99, 155, 255, 0.1); border: 1px solid rgba(99, 155, 255, 0.25); border-radius: 999px; padding: 2px 9px; font-variant-numeric: tabular-nums; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 0.8rem; font-weight: 600; color: #94a3b8; cursor: pointer; user-select: none; }
+.toggle input { accent-color: #60a5fa; width: 16px; height: 16px; }
+.tag { margin-left: 8px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #f9a8d4; background: rgba(249, 168, 212, 0.1); border: 1px solid rgba(249, 168, 212, 0.25); border-radius: 999px; padding: 1px 7px; vertical-align: middle; }
 .empty { padding: 16px 18px; font-size: 0.82rem; color: #64748b; }
 @media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } header { padding: 32px 16px 18px; } #content, #errors { padding: 0 12px; } #day-tabs { padding: 0 12px 4px; } }
 </style>
@@ -135,6 +138,7 @@ nav a.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-colo
     <h1>Daily Itinerary</h1>
     <nav><a href="index.html">Lightning Lane</a><a href="down.html">Down Detector</a><a href="itinerary.html" class="active">Daily Itinerary</a></nav>
     <div id="updated">Loading...</div>
+    <label class="toggle"><input type="checkbox" id="include-all"> Include meets &amp; shows with more than 2 showtimes</label>
 </header>
 
 <div id="day-tabs"></div>
@@ -162,6 +166,8 @@ let parks = FALLBACK_PARKS;
 const days = [];          // YYYY-MM-DD, next 7 days in park time
 const schedule = {};      // date -> park name -> [{ name, times: ['HH:MM'] }]
 let activeDay = null;
+const MAX_UNIQUE_TIMES = 2; // shows with more performances than this are hidden unless the toggle is on
+const isMeet = e => e.entityType === 'ATTRACTION' || /meet|greet/i.test(e.name || '');
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -192,7 +198,9 @@ function clock(iso) {
 // Sorting key for "HH:MM" strings kept alongside the display time.
 function ingest(parkName, liveData) {
     for (const show of liveData) {
-        if (show.entityType !== 'SHOW' || !show.showtimes) continue;
+        if (!show.showtimes) continue;
+        const meet = isMeet(show);
+        if (show.entityType !== 'SHOW' && !meet) continue;
         for (const st of show.showtimes) {
             if (st.type === 'Operating') continue; // operating hours, not a performance
             const date = (st.startTime || '').slice(0, 10);
@@ -202,7 +210,7 @@ function ingest(parkName, liveData) {
             const key = (st.startTime.slice(11, 16));
             const list = ((schedule[date] ??= {})[parkName] ??= []);
             let entry = list.find(e => e.name === show.name); // unique shows only
-            if (!entry) list.push(entry = { name: show.name, times: [] });
+            if (!entry) list.push(entry = { name: show.name, meet, times: [] });
             if (!entry.times.some(t => t.key === key)) entry.times.push({ key, time });
         }
     }
@@ -219,11 +227,13 @@ function render() {
         `<button class="day-tab${d === activeDay ? ' active' : ''}" data-day="${d}">${dayLabel(d, i)}</button>`).join('');
 
     document.getElementById('content').innerHTML = '<div class="cards-grid">' + parks.map(({ name }) => {
-        const shows = schedule[activeDay]?.[name] || [];
+        const includeAll = document.getElementById('include-all').checked;
+        const shows = (schedule[activeDay]?.[name] || [])
+            .filter(s => includeAll || (!s.meet && s.times.length <= MAX_UNIQUE_TIMES));
         const icon = parkIcons[name] ? `<img src="${parkIcons[name]}" alt="">` : '';
         const body = shows.length
-            ? shows.map(s => `<div class="show"><div class="name">${esc(s.name)}</div><div class="times">${s.times.map(t => `<span class="time">${t.time}</span>`).join('')}</div></div>`).join('')
-            : '<div class="empty">No showtimes published for this day yet.</div>';
+            ? shows.map(s => `<div class="show"><div class="name">${esc(s.name)}${s.meet ? '<span class="tag">Meet</span>' : ''}</div><div class="times">${s.times.map(t => `<span class="time">${t.time}</span>`).join('')}</div></div>`).join('')
+            : '<div class="empty">No showtimes to show for this day. Try including meets &amp; frequent shows.</div>';
         return `<div class="park-card"><div class="park-header">${icon}${esc(name)}<span class="count good" style="color:#93c5fd;background:rgba(99,155,255,.12);border-color:rgba(99,155,255,.25)">${shows.length} show${shows.length === 1 ? '' : 's'}</span></div>${body}</div>`;
     }).join('') + '</div>';
 }
@@ -238,6 +248,7 @@ async function init() {
     for (let i = 0; i < DAYS; i++) days.push(addDays(today, i));
     activeDay = today;
 
+    document.getElementById('include-all').addEventListener('change', render);
     document.getElementById('day-tabs').addEventListener('click', e => {
         const tab = e.target.closest('.day-tab');
         if (!tab) return;
