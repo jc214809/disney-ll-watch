@@ -196,7 +196,7 @@ function clock(iso) {
 }
 
 // Sorting key for "HH:MM" strings kept alongside the display time.
-function ingest(parkName, liveData) {
+function ingest(parkName, liveData, skipDate = null) {
     for (const show of liveData) {
         if (!show.showtimes) continue;
         const meet = isMeet(show);
@@ -204,7 +204,7 @@ function ingest(parkName, liveData) {
         for (const st of show.showtimes) {
             if (st.type === 'Operating') continue; // operating hours, not a performance
             const date = (st.startTime || '').slice(0, 10);
-            if (!days.includes(date)) continue;
+            if (!days.includes(date) || date === skipDate) continue;
             const time = clock(st.startTime);
             if (!time) continue;
             const key = (st.startTime.slice(11, 16));
@@ -256,6 +256,20 @@ async function init() {
         render();
     });
 
+    // Future days: showtimes the daily updater has stored on the data branch (today comes live below).
+    let storedAt = null;
+    try {
+        const res = await fetch(`https://raw.githubusercontent.com/jc214809/disney-ll-watch/data/shows.json?v=${Date.now()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const stored = await res.json();
+        storedAt = new Date(stored.updated_at);
+        for (const [parkName, shows] of Object.entries(stored.parks || {})) {
+            ingest(parkName, Object.values(shows), today);
+        }
+    } catch (e) {
+        console.warn('Stored showtimes unavailable:', e);
+    }
+
     let failures = 0;
     await Promise.all(parks.map(async ({ name, id }) => {
         try {
@@ -271,7 +285,8 @@ async function init() {
 
     document.getElementById('updated').textContent = failures === parks.length
         ? 'Could not load showtimes'
-        : `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · times shown in park time (ET)`;
+        : `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · times shown in park time (ET)` +
+          (storedAt ? ` · future days stored ${storedAt.toLocaleString(undefined, { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : '');
     render();
 }
 
