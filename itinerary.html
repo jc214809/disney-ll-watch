@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Itinerary</title>
+<title>Today's Itinerary</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -112,13 +112,6 @@ nav a.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-colo
 .badge.CLOSED, .badge.REFURBISHMENT { color: #94a3b8; background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); }
 
 
-#day-tabs { display: flex; gap: 8px; overflow-x: auto; max-width: 900px; margin: 20px auto 0; padding: 0 20px 4px; }
-.day-tab {
-    flex: 0 0 auto; cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: 600; color: #94a3b8;
-    background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(51, 65, 85, 0.8); border-radius: 999px; padding: 8px 16px;
-}
-.day-tab:hover { color: #e2e8f0; }
-.day-tab.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-color: rgba(99, 155, 255, 0.4); }
 .show { padding: 10px 18px; border-bottom: 1px solid rgba(30, 41, 59, 0.8); }
 .show:last-child { border-bottom: none; }
 .show .name { font-size: 0.88rem; font-weight: 600; color: #e2e8f0; }
@@ -128,26 +121,24 @@ nav a.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-colo
 .toggle input { accent-color: #60a5fa; width: 16px; height: 16px; }
 .tag { margin-left: 8px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #f9a8d4; background: rgba(249, 168, 212, 0.1); border: 1px solid rgba(249, 168, 212, 0.25); border-radius: 999px; padding: 1px 7px; vertical-align: middle; }
 .empty { padding: 16px 18px; font-size: 0.82rem; color: #64748b; }
-@media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } header { padding: 32px 16px 18px; } #content, #errors { padding: 0 12px; } #day-tabs { padding: 0 12px 4px; } }
+@media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } header { padding: 32px 16px 18px; } #content, #errors { padding: 0 12px; } }
 </style>
 </head>
 
 <body>
 
 <header>
-    <h1>Daily Itinerary</h1>
-    <nav><a href="index.html">Lightning Lane</a><a href="down.html">Down Detector</a><a href="itinerary.html" class="active">Daily Itinerary</a></nav>
+    <h1>Today's Itinerary</h1>
+    <nav><a href="index.html">Lightning Lane</a><a href="down.html">Down Detector</a><a href="itinerary.html" class="active">Today's Itinerary</a></nav>
     <div id="updated">Loading...</div>
     <label class="toggle"><input type="checkbox" id="include-all"> Include meets &amp; shows with more than 2 showtimes</label>
 </header>
 
-<div id="day-tabs"></div>
 <div id="errors"></div>
 <div id="content"></div>
 
 <script>
 const API = 'https://api.themeparks.wiki/v1/entity';
-const DAYS = 7;
 const TZ = 'America/New_York'; // all four WDW parks
 const FALLBACK_PARKS = [
     { name: 'Magic Kingdom',     id: '75ea578a-adc8-4116-a54d-dccb60765ef9' },
@@ -163,7 +154,7 @@ const parkIcons = {
 };
 
 let parks = FALLBACK_PARKS;
-const days = [];          // YYYY-MM-DD, next 7 days in park time
+const days = [];          // today's date (YYYY-MM-DD) in park time
 const schedule = {};      // date -> park name -> [{ name, times: ['HH:MM'] }]
 let activeDay = null;
 const MAX_UNIQUE_TIMES = 2; // shows with more performances than this are hidden unless the toggle is on
@@ -175,18 +166,6 @@ function parkToday() {
     return new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date()); // YYYY-MM-DD
 }
 
-function addDays(date, n) {
-    const d = new Date(date + 'T12:00:00Z');
-    d.setUTCDate(d.getUTCDate() + n);
-    return d.toISOString().slice(0, 10);
-}
-
-function dayLabel(date, i) {
-    const d = new Date(date + 'T12:00:00Z');
-    const base = d.toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
-    return i === 0 ? `Today · ${base}` : base;
-}
-
 // "2026-10-24T14:30:00-04:00" -> "2:30 PM" (park-local clock time, independent of viewer timezone)
 function clock(iso) {
     const m = /T(\d{2}):(\d{2})/.exec(iso);
@@ -196,7 +175,7 @@ function clock(iso) {
 }
 
 // Sorting key for "HH:MM" strings kept alongside the display time.
-function ingest(parkName, liveData, skipDate = null) {
+function ingest(parkName, liveData) {
     for (const show of liveData) {
         if (!show.showtimes) continue;
         const meet = isMeet(show);
@@ -204,7 +183,7 @@ function ingest(parkName, liveData, skipDate = null) {
         for (const st of show.showtimes) {
             if (st.type === 'Operating') continue; // operating hours, not a performance
             const date = (st.startTime || '').slice(0, 10);
-            if (!days.includes(date) || date === skipDate) continue;
+            if (!days.includes(date)) continue;
             const time = clock(st.startTime);
             if (!time) continue;
             const key = (st.startTime.slice(11, 16));
@@ -223,9 +202,6 @@ function ingest(parkName, liveData, skipDate = null) {
 }
 
 function render() {
-    document.getElementById('day-tabs').innerHTML = days.map((d, i) =>
-        `<button class="day-tab${d === activeDay ? ' active' : ''}" data-day="${d}">${dayLabel(d, i)}</button>`).join('');
-
     document.getElementById('content').innerHTML = '<div class="cards-grid">' + parks.map(({ name }) => {
         const includeAll = document.getElementById('include-all').checked;
         const shows = (schedule[activeDay]?.[name] || [])
@@ -233,7 +209,7 @@ function render() {
         const icon = parkIcons[name] ? `<img src="${parkIcons[name]}" alt="">` : '';
         const body = shows.length
             ? shows.map(s => `<div class="show"><div class="name">${esc(s.name)}${s.meet ? '<span class="tag">Meet</span>' : ''}</div><div class="times">${s.times.map(t => `<span class="time">${t.time}</span>`).join('')}</div></div>`).join('')
-            : '<div class="empty">No showtimes to show for this day. Try including meets &amp; frequent shows.</div>';
+            : '<div class="empty">No showtimes to show for today. Try including meets &amp; frequent shows.</div>';
         return `<div class="park-card"><div class="park-header">${icon}${esc(name)}<span class="count good" style="color:#93c5fd;background:rgba(99,155,255,.12);border-color:rgba(99,155,255,.25)">${shows.length} show${shows.length === 1 ? '' : 's'}</span></div>${body}</div>`;
     }).join('') + '</div>';
 }
@@ -245,30 +221,10 @@ async function init() {
     } catch (e) { /* use built-in park list */ }
 
     const today = parkToday();
-    for (let i = 0; i < DAYS; i++) days.push(addDays(today, i));
+    days.push(today);
     activeDay = today;
 
     document.getElementById('include-all').addEventListener('change', render);
-    document.getElementById('day-tabs').addEventListener('click', e => {
-        const tab = e.target.closest('.day-tab');
-        if (!tab) return;
-        activeDay = tab.dataset.day;
-        render();
-    });
-
-    // Future days: showtimes the daily updater has stored on the data branch (today comes live below).
-    let storedAt = null;
-    try {
-        const res = await fetch(`https://raw.githubusercontent.com/jc214809/disney-ll-watch/data/shows.json?v=${Date.now()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const stored = await res.json();
-        storedAt = new Date(stored.updated_at);
-        for (const [parkName, shows] of Object.entries(stored.parks || {})) {
-            ingest(parkName, Object.values(shows), today);
-        }
-    } catch (e) {
-        console.warn('Stored showtimes unavailable:', e);
-    }
 
     let failures = 0;
     await Promise.all(parks.map(async ({ name, id }) => {
@@ -285,8 +241,7 @@ async function init() {
 
     document.getElementById('updated').textContent = failures === parks.length
         ? 'Could not load showtimes'
-        : `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · times shown in park time (ET)` +
-          (storedAt ? ` · future days stored ${storedAt.toLocaleString(undefined, { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : '');
+        : `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · times shown in park time (ET)`;
     render();
 }
 

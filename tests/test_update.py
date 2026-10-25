@@ -228,7 +228,6 @@ def test_main_writes_data_and_state_and_survives_pushover_failure(monkeypatch, t
     monkeypatch.setattr(update, "DATA_PATH", tmp_path / "data.json")
     monkeypatch.setattr(update, "STATE_PATH", tmp_path / "state.json")
     monkeypatch.setattr(update, "DOWN_STATE_PATH", tmp_path / "down_state.json")
-    monkeypatch.setattr(update, "SHOWS_PATH", tmp_path / "shows.json")
     monkeypatch.setattr(update, "fetch_live", lambda park_id: {"liveData": []})
 
     item_payload = schedule(operating("2026-10-22", [purchase(available=True)]))
@@ -310,40 +309,6 @@ def test_down_alerts_respects_config_toggle():
     assert alerts == [] and state == down
 
 
-# ---- shows -----------------------------------------------------------------
-
-def st(day, hh="14", type_="Performance Time"):
-    return {"type": type_, "startTime": f"{day}T{hh}:00:00-04:00", "endTime": f"{day}T{hh}:30:00-04:00"}
-
-
-def test_extract_shows_keeps_performances_only():
-    live = [
-        {"id": "a", "name": "Fireworks", "entityType": "SHOW",
-         "showtimes": [st("2026-10-25", "21"), st("2026-10-25", "08", "Operating")]},
-        {"id": "b", "name": "Meet Mickey", "entityType": "ATTRACTION", "showtimes": [st("2026-10-25")]},
-        {"id": "c", "name": "Ride", "entityType": "ATTRACTION"},
-        {"id": "d", "name": "Hours only", "entityType": "SHOW", "showtimes": [st("2026-10-25", "09", "Operating")]},
-    ]
-    shows = update.extract_shows(live)
-    assert set(shows) == {"a", "b"}
-    assert len(shows["a"]["showtimes"]) == 1
-
-
-def test_merge_shows_keeps_future_days_feed_no_longer_reports():
-    old = {"a": {"name": "F", "entityType": "SHOW", "showtimes": [st("2026-10-26"), st("2026-10-27")]}}
-    new = {"a": {"name": "F", "entityType": "SHOW", "showtimes": [st("2026-10-25"), st("2026-10-26", "15")]}}
-    merged = update.merge_shows(old, new, "2026-10-25")
-    days = [t["startTime"][:13] for t in merged["a"]["showtimes"]]
-    assert days == ["2026-10-25T14", "2026-10-26T15", "2026-10-27T14"]  # 26th replaced, 27th kept
-
-
-def test_merge_shows_drops_past_and_keeps_old_on_failed_fetch():
-    old = {"a": {"name": "F", "entityType": "SHOW", "showtimes": [st("2026-10-24"), st("2026-10-26")]}}
-    merged = update.merge_shows(old, {}, "2026-10-25")
-    assert [t["startTime"][:10] for t in merged["a"]["showtimes"]] == ["2026-10-26"]
-    assert update.merge_shows(old, {}, "2026-10-27") == {}
-
-
 def test_in_trip_window_is_inclusive():
     cfg = {"trip_start": "2026-10-21", "trip_end": "2026-10-25"}
     d = update.date
@@ -360,7 +325,6 @@ def test_main_skips_down_check_outside_trip_and_resets_baseline(monkeypatch, tmp
     monkeypatch.setattr(update, "DATA_PATH", tmp_path / "data.json")
     monkeypatch.setattr(update, "STATE_PATH", tmp_path / "state.json")
     monkeypatch.setattr(update, "DOWN_STATE_PATH", tmp_path / "down_state.json")
-    monkeypatch.setattr(update, "SHOWS_PATH", tmp_path / "shows.json")
     monkeypatch.setattr(update, "fetch_month", lambda *a: ({}, "http://x"))
     monkeypatch.setattr(update, "fetch_live", lambda pid: {"liveData": [
         {"id": "a", "name": "Space Mountain", "entityType": "ATTRACTION", "status": "DOWN"}]})

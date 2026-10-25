@@ -13,7 +13,6 @@ CONFIG_PATH = ROOT / "config.json"
 DATA_PATH = ROOT / "data.json"
 STATE_PATH = ROOT / "state.json"
 DOWN_STATE_PATH = ROOT / "down_state.json"
-SHOWS_PATH = ROOT / "shows.json"
 PARK_TZ = ZoneInfo("America/New_York")  # all four WDW parks
 
 API_BASE = "https://api.themeparks.wiki/v1/entity/{park_id}/schedule/{year}/{month:02d}"
@@ -227,63 +226,6 @@ def build_down_alerts(config, down, fetched, old_down):
     return alerts, new_state
 
 
-def extract_shows(live_data):
-    """Shows/meets with performance times from a park's /live payload: {entity_id: entry}."""
-    shows = {}
-    for entry in live_data:
-        times = [
-            {"type": st.get("type"), "startTime": st.get("startTime"), "endTime": st.get("endTime")}
-            for st in entry.get("showtimes") or []
-            if st.get("type") != "Operating" and st.get("startTime")
-        ]
-        if times and entry.get("entityType") in ("SHOW", "ATTRACTION"):
-            shows[entry["id"]] = {
-                "name": entry.get("name", "Unknown Show"),
-                "entityType": entry["entityType"],
-                "showtimes": times,
-            }
-    return shows
-
-
-def merge_shows(old, new, today):
-    """Merge freshly fetched showtimes into the stored set.
-
-    For each show, dates present in the new data replace the stored ones; stored
-    dates the feed no longer reports (it only exposes the next day or so) are kept
-    until they are in the past.
-    """
-    merged = {}
-    for ride_id in set(old) | set(new):
-        fresh = new.get(ride_id)
-        prev = old.get(ride_id)
-        base = fresh or prev
-        fresh_dates = {t["startTime"][:10] for t in fresh["showtimes"]} if fresh else set()
-        kept = [t for t in (prev["showtimes"] if prev else [])
-                if t["startTime"][:10] not in fresh_dates]
-        times = [t for t in kept + (fresh["showtimes"] if fresh else []) if t["startTime"][:10] >= today]
-        if times:
-            times.sort(key=lambda t: t["startTime"])
-            merged[ride_id] = {**base, "showtimes": times}
-    return merged
-
-
-def update_shows(config, errors):
-    old = load_json(SHOWS_PATH, {}).get("parks", {})
-    today = datetime.now(PARK_TZ).date().isoformat()
-    parks = {}
-    for park in config.get("parks", []):
-        name = park["name"]
-        old_park = old.get(name, {})
-        try:
-            new_park = extract_shows(fetch_live(park["id"]).get("liveData", []))
-        except Exception as exc:
-            errors.append({"park": name, "shows": True, "error": str(exc)})
-            new_park = {}
-        parks[name] = merge_shows(old_park, new_park, today)
-    write_json(SHOWS_PATH, {"updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z", "parks": parks})
-    return sum(len(v) for v in parks.values())
-
-
 def main():
     config = load_json(CONFIG_PATH, {})
     if not config:
@@ -321,7 +263,6 @@ def main():
         print("Outside trip dates; skipping down-ride check")
         new_down = None
     write_json(DOWN_STATE_PATH, new_down)
-    show_count = update_shows(config, errors)
 
     new_state = {
         item_key(item): {
@@ -342,7 +283,7 @@ def main():
         "errors": errors,
     })
 
-    print(f"Updated {len(items)} Lightning Lane Single Pass records; {len(alerts)} alerts; {len(down)} rides down, {len(down_alerts)} down alerts; {show_count} shows stored")
+    print(f"Updated {len(items)} Lightning Lane Single Pass records; {len(alerts)} alerts; {len(down)} rides down, {len(down_alerts)} down alerts")
     return 0
 
 
