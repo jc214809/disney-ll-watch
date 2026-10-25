@@ -344,6 +344,32 @@ def test_merge_shows_drops_past_and_keeps_old_on_failed_fetch():
     assert update.merge_shows(old, {}, "2026-10-27") == {}
 
 
+def test_in_trip_window_is_inclusive():
+    cfg = {"trip_start": "2026-10-21", "trip_end": "2026-10-25"}
+    d = update.date
+    assert update.in_trip_window(cfg, d(2026, 10, 21))
+    assert update.in_trip_window(cfg, d(2026, 10, 25))
+    assert not update.in_trip_window(cfg, d(2026, 10, 20))
+    assert not update.in_trip_window(cfg, d(2026, 10, 26))
+
+
+def test_main_skips_down_check_outside_trip_and_resets_baseline(monkeypatch, tmp_path):
+    cfg = tmp_path / "config.json"
+    cfg.write_text(json.dumps({**CONFIG, "trip_start": "2020-01-01", "trip_end": "2020-01-02"}))
+    monkeypatch.setattr(update, "CONFIG_PATH", cfg)
+    monkeypatch.setattr(update, "DATA_PATH", tmp_path / "data.json")
+    monkeypatch.setattr(update, "STATE_PATH", tmp_path / "state.json")
+    monkeypatch.setattr(update, "DOWN_STATE_PATH", tmp_path / "down_state.json")
+    monkeypatch.setattr(update, "SHOWS_PATH", tmp_path / "shows.json")
+    monkeypatch.setattr(update, "fetch_month", lambda *a: ({}, "http://x"))
+    monkeypatch.setattr(update, "fetch_live", lambda pid: {"liveData": [
+        {"id": "a", "name": "Space Mountain", "entityType": "ATTRACTION", "status": "DOWN"}]})
+    monkeypatch.setattr(update, "send_pushover", lambda *a: pytest.fail("no alert outside trip"))
+    (tmp_path / "down_state.json").write_text(json.dumps({}))
+    assert update.main() == 0
+    assert update.load_json(tmp_path / "down_state.json", "missing") is None
+
+
 def test_main_fails_without_config(monkeypatch, tmp_path):
     monkeypatch.setattr(update, "CONFIG_PATH", tmp_path / "missing.json")
     assert update.main() == 1
