@@ -34,6 +34,7 @@ jobs:
           git fetch origin data:data 2>/dev/null || true
           git show data:state.json > state.json 2>/dev/null || true
           git show data:down_state.json > down_state.json 2>/dev/null || true
+          git show data:shows.json > shows.json 2>/dev/null || true
 
       - name: Run Updater
         env:
@@ -49,7 +50,7 @@ jobs:
 
           git checkout --orphan data-tmp
           git reset
-          git add data.json state.json down_state.json
+          git add data.json state.json down_state.json shows.json
           git commit -m "Update Lightning Lane data"
           git push origin data-tmp:data --force
           git checkout -f main
