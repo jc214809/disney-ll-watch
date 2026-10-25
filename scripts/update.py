@@ -200,6 +200,11 @@ def fetch_down_rides(config):
     return down, fetched, errors
 
 
+def in_trip_window(config, today=None):
+    today = today or datetime.now(PARK_TZ).date()
+    return parse_date(config["trip_start"]) <= today <= parse_date(config["trip_end"])
+
+
 def build_down_alerts(config, down, fetched, old_down):
     """Alert on rides that newly went DOWN. Returns (alerts, new_down_state).
 
@@ -296,18 +301,25 @@ def main():
         except Exception as exc:
             errors.append({"pushover": alert, "error": str(exc)})
 
-    down, fetched, down_errors = fetch_down_rides(config)
-    errors.extend(down_errors)
-    old_down = load_json(DOWN_STATE_PATH, None)
-    if not isinstance(old_down, dict):
-        old_down = None
-    down_alerts, new_down = build_down_alerts(config, down, fetched, old_down)
-    for alert in down_alerts:
-        print(f'Sending alert: {alert["title"]} - {alert["message"]}')
-        try:
-            send_pushover(alert["title"], alert["message"])
-        except Exception as exc:
-            errors.append({"pushover": alert, "error": str(exc)})
+    down = {}
+    down_alerts = []
+    if in_trip_window(config):
+        down, fetched, down_errors = fetch_down_rides(config)
+        errors.extend(down_errors)
+        old_down = load_json(DOWN_STATE_PATH, None)
+        if not isinstance(old_down, dict):
+            old_down = None
+        down_alerts, new_down = build_down_alerts(config, down, fetched, old_down)
+        for alert in down_alerts:
+            print(f'Sending alert: {alert["title"]} - {alert["message"]}')
+            try:
+                send_pushover(alert["title"], alert["message"])
+            except Exception as exc:
+                errors.append({"pushover": alert, "error": str(exc)})
+    else:
+        # Outside the trip: no down check. Reset so the first in-trip run is a silent baseline.
+        print("Outside trip dates; skipping down-ride check")
+        new_down = None
     write_json(DOWN_STATE_PATH, new_down)
     show_count = update_shows(config, errors)
 
