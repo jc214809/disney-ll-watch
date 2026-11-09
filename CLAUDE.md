@@ -4,7 +4,7 @@ Static dashboard for Walt Disney World Individual Lightning Lane (ILL) availabil
 
 ## Commands
 - Serve locally: `python3 -m http.server 8743 --directory .` → http://localhost:8743 (or VS Code "Serve + Open in Chrome")
-- Tests: `pip install -r requirements-dev.txt && python3 -m pytest -q tests`
+- Tests: `pip install -r requirements-dev.txt && python3 -m pytest -q tests`, plus `node --test tests/itinerary-filter.test.js` (pass the file; the bare directory form fails)
 - Run updater locally: `python3 scripts/update.py` (writes `data.json` + `state.json` in repo root — do not commit them to main, and do not gitignore them: CI `git add`s them for the data branch; Pushover skipped without `PUSHOVER_APP_TOKEN`/`PUSHOVER_USER_KEY`)
 - Deploy worker (WebSocket mode only): `cd worker && wrangler deploy`
 
@@ -14,6 +14,8 @@ Static dashboard for Walt Disney World Individual Lightning Lane (ILL) availabil
 - `scripts/update.py` — pulls ThemeParks schedule API, diffs against `state.json`, sends Pushover alerts, writes `data.json`.
 - `.github/workflows/update.yml` — `workflow_dispatch` only; triggered by external cron via the GitHub API. Pushes `data.json`/`state.json` to the orphan `data` branch (force push).
 - `worker/` — Cloudflare Worker WebSocket proxy (adds `X-API-Key`). Only used when `USE_WEBSOCKET = true`.
+- `itinerary.html` — Today's Itinerary page (showtimes per park from the live feed). Hides meets and shows with >2 times unless the toggle is on; party-night performances (showtime type `Special Ticketed Event`, e.g. Mickey's Very Merry Christmas Party) are always shown and tagged "Party".
+- `itinerary-filter.js` — pure visibility rule for the itinerary page (browser global `ItineraryFilter`, also `require`-able by Node tests).
 - `tests/test_update.py` — pytest suite for `scripts/update.py` (network and Pushover mocked).
 
 ## Key patterns / gotchas
@@ -22,5 +24,5 @@ Static dashboard for Walt Disney World Individual Lightning Lane (ILL) availabil
 - Alerts fire only on state changes versus `state.json`; first run (no state) sends nothing.
 - `data` branch is force-pushed by CI — never commit to it by hand.
 - Future tabs are capped at 6 days ahead.
-- No JS tests; frontend changes must be checked in a browser.
+- JS tests exist only for `itinerary-filter.js`; other frontend changes must be checked in a browser.
 - Known nit: `scripts/update.py` uses deprecated `datetime.utcnow()`.

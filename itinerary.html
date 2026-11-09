@@ -137,7 +137,9 @@ nav a.active { color: #e2e8f0; background: rgba(99, 155, 255, 0.15); border-colo
 <div id="errors"></div>
 <div id="content"></div>
 
+<script src="itinerary-filter.js"></script>
 <script>
+const { isSpecialShowtime, isVisible } = ItineraryFilter;
 const API = 'https://api.themeparks.wiki/v1/entity';
 const TZ = 'America/New_York'; // all four WDW parks
 const FALLBACK_PARKS = [
@@ -189,7 +191,8 @@ function ingest(parkName, liveData) {
             const key = (st.startTime.slice(11, 16));
             const list = ((schedule[date] ??= {})[parkName] ??= []);
             let entry = list.find(e => e.name === show.name); // unique shows only
-            if (!entry) list.push(entry = { name: show.name, meet, times: [] });
+            if (!entry) list.push(entry = { name: show.name, meet, special: false, times: [] });
+            if (isSpecialShowtime(st)) entry.special = true;
             if (!entry.times.some(t => t.key === key)) entry.times.push({ key, time });
         }
     }
@@ -205,10 +208,10 @@ function render() {
     document.getElementById('content').innerHTML = '<div class="cards-grid">' + parks.map(({ name }) => {
         const includeAll = document.getElementById('include-all').checked;
         const shows = (schedule[activeDay]?.[name] || [])
-            .filter(s => includeAll || (!s.meet && s.times.length <= MAX_UNIQUE_TIMES));
+            .filter(s => isVisible(s, includeAll, MAX_UNIQUE_TIMES));
         const icon = parkIcons[name] ? `<img src="${parkIcons[name]}" alt="">` : '';
         const body = shows.length
-            ? shows.map(s => `<div class="show"><div class="name">${esc(s.name)}${s.meet ? '<span class="tag">Meet</span>' : ''}</div><div class="times">${s.times.map(t => `<span class="time">${t.time}</span>`).join('')}</div></div>`).join('')
+            ? shows.map(s => `<div class="show"><div class="name">${esc(s.name)}${s.special ? '<span class="tag">Party</span>' : ''}${s.meet ? '<span class="tag">Meet</span>' : ''}</div><div class="times">${s.times.map(t => `<span class="time">${t.time}</span>`).join('')}</div></div>`).join('')
             : '<div class="empty">No showtimes to show for today. Try including meets &amp; frequent shows.</div>';
         return `<div class="park-card"><div class="park-header">${icon}${esc(name)}<span class="count good" style="color:#93c5fd;background:rgba(99,155,255,.12);border-color:rgba(99,155,255,.25)">${shows.length} show${shows.length === 1 ? '' : 's'}</span></div>${body}</div>`;
     }).join('') + '</div>';
